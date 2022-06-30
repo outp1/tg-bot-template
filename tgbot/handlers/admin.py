@@ -1,8 +1,9 @@
 from aiogram import Dispatcher
 from aiogram.types import Message
+from tgbot.models import UserTables, ContentTables
 
 
-async def admin_start(message: Message):
+async def admin_start(message: Message, user_tables: UserTables = None, content_tables: ContentTables = None):
     await message.reply("Hello, admin!")
 
 

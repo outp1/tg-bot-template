@@ -12,8 +12,6 @@ services:
       - ./database:/var/lib/postgresql/
     ports:
       - 5430:5432
-    networks:
-    - tg_bot
 
   bot:
     container_name: "$BOT_CONTAINER_NAME"
@@ -27,8 +25,6 @@ services:
     restart: always
     env_file:
       - ".env"
-    networks:
-    - tg_bot
     depends_on: 
     - db
 
@@ -43,9 +39,4 @@ services:
       - db
     env_file:
       - '.env'
-    networks:
-    - tg_bot
 
-networks:
-  tg_bot:
-    driver: bridge

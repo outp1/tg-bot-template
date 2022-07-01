@@ -7,6 +7,7 @@ from . import telegram_errors_handler
 
 class BotLogging:
 
+    # TODO: automatic tg handler in module detection 
     dir_path = os.path.dirname(os.path.realpath(__file__))
 
     def __init__(self, logger_name: str, logs_dir: str, bot_token: str, admin: str, 

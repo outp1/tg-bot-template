@@ -7,7 +7,8 @@ from aiogram.contrib.fsm_storage.redis import RedisStorage2
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 
 from tgbot.config import load_config
-from tgbot.filters.admin import AdminFilter
+from tgbot.filters.rolefilters import AdminFilter
+from tgbot.filters.chatfilters import PrivateFilter
 from tgbot.handlers.admin import register_admin
 from tgbot.handlers.user import register_user
 from tgbot.handlers.misc import register_misc
@@ -23,6 +24,7 @@ def register_all_middlewares(dp):
 
 def register_all_filters(dp):
     dp.filters_factory.bind(AdminFilter)
+    dp.filters_factory.bind(PrivateFilter)
 
 
 def register_all_handlers(dp):

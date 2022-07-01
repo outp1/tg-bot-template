@@ -3,8 +3,10 @@ from tgbot.models import UserTables, ContentTables
 from tgbot.keyboards import inclose
 
 
-async def admin_start(message: types.Message):
+async def admin_start(message: types.Message, logger):
     await message.reply("Hello, admin!", reply_markup=inclose('Отмена'))
+    logger.info('Im work')
+    raise TypeError
 
 
 def register_admin(dp: Dispatcher):

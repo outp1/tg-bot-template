@@ -11,14 +11,13 @@ from tgbot.filters.admin import AdminFilter
 from tgbot.handlers.admin import register_admin
 from tgbot.handlers.user import register_user
 from tgbot.handlers.misc import register_misc
-from tgbot.middlewares.db import DbMiddleware
+from tgbot.middlewares.objects import ObjectsMiddleware
 from tgbot.models import UserTables, ContentTables
-
-logger = logging.getLogger(__name__)
+from tgbot.misc import botlogging
 
 
 def register_all_middlewares(dp):
-    dp.setup_middleware(DbMiddleware())
+    dp.setup_middleware(ObjectsMiddleware())
 #    dp.setup_middleware(LoggingMiddleware())
 
 
@@ -33,12 +32,13 @@ def register_all_handlers(dp):
 
 
 async def main():
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format=u'%(filename)s:%(lineno)d #%(levelname)-8s [%(asctime)s] - %(name)s - %(message)s',
-    )
-    logger.info("Starting bot")
     config = load_config(".env")
+
+    logger = botlogging.BotLogging('Main', config.program.logs_folder, config.program.logs_token, 
+            config.program.logs_telegram_id, tg_handler_dir='tgbot/misc/botlogging/telegram_errors_handler')
+    logger = logger.get_logger()
+
+    logger.info("Starting bot")
 
     storage = RedisStorage2() if config.tg_bot.use_redis else MemoryStorage()
     bot = Bot(token=config.tg_bot.token, parse_mode='HTML')
@@ -50,6 +50,8 @@ async def main():
     bot['user_tables'] = UserTables(config.db.database, config.db.auth, config.db.tables)
     bot['content_tables'] = ContentTables(config.db.database, config.db.auth, 
             config.db.tables, config.tg_bot.message_contents)
+
+    bot['logger'] = logger
 
     register_all_middlewares(dp)
     register_all_filters(dp)

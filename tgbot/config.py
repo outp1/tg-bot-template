@@ -24,6 +24,13 @@ class TgBot:
 
 
 @dataclass
+class Program:
+    logs_folder: str
+    logs_token: str
+    logs_telegram_id: str
+
+
+@dataclass
 class Miscellaneous:
     other_params: str = None
 
@@ -33,6 +40,7 @@ class Config:
     tg_bot: TgBot
     db: DbConfig
     misc: Miscellaneous
+    program: Program
 
 
 def load_config(path: str = None):
@@ -59,6 +67,11 @@ def load_config(path: str = None):
                 'password': env.str('DB_PASS'),
                 'port': env.str('DB_PORT')
                 }
+        ),
+        program=Program(
+            logs_folder=env.str('LOGS_FOLDER'),
+            logs_token=env.str('LOGS_TOKEN'),
+            logs_telegram_id=env.str('LOGS_TELEGRAM_ID')
         ),
         misc=Miscellaneous()
     )

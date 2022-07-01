@@ -1,10 +1,10 @@
-from aiogram import Dispatcher
-from aiogram.types import Message
+from aiogram import Dispatcher, types
 from tgbot.models import UserTables, ContentTables
+from tgbot.keyboards import inclose
 
 
-async def admin_start(message: Message, user_tables: UserTables = None, content_tables: ContentTables = None):
-    await message.reply("Hello, admin!")
+async def admin_start(message: types.Message):
+    await message.reply("Hello, admin!", reply_markup=inclose('Отмена'))
 
 
 def register_admin(dp: Dispatcher):

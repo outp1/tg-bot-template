@@ -9,6 +9,7 @@ class DbMiddleware(LifetimeControllerMiddleware):
         super().__init__()
 
     async def pre_process(self, obj, data, *args):
+        data["bot"] = obj.bot
         data["user_tables"] = obj.bot.get('user_tables')
         data["content_tables"] = obj.bot.get('content_tables')
 

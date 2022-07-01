@@ -20,10 +20,11 @@ class ContentTables(DatabaseConnection):
                 cursor.execute('SELECT * FROM content')
                 if not cursor.fetchall():
                     for c in self.default_contents:
-                        cursor.execute('INSERT INTO content (key, text, media_type, media) VALUES (%s, %s, %s, %s)',
+                        cursor.execute(
+                                'INSERT INTO content (key, text, media_type, media) VALUES (%s, %s, %s, %s)',
                                 (c[0], c[1], c[2], c[3]))
         
-    def take_message_content(self, key: str):
+    async def take_message_content(self, key: str):
         with self.sqlighter as connection:
             cursor = connection.cursor()
             with connection:

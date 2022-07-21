@@ -32,7 +32,7 @@ class Program:
 
 @dataclass
 class Miscellaneous:
-    other_params: str = None
+    inclose_text: str = None
 
 
 @dataclass
@@ -73,5 +73,5 @@ def load_config(path: str = None):
             logs_token=env.str('LOGS_TOKEN'),
             logs_telegram_id=env.str('LOGS_TELEGRAM_ID')
         ),
-        misc=Miscellaneous()
+        misc=Miscellaneous(inclose_text=env.str('INCLOSE_TEXT'))
     )

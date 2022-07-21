@@ -9,3 +9,14 @@ def get_admin_panel_keyboard(buttons_list: str = None, *buttons):
         for button in buttons_list:
             kb.add(button)
     return kb
+
+def get_stats_panel_keyboard():
+    kb = InlineKeyboardMarkup()
+    #TODO: kb.add(...)
+    return kb
+
+def get_users_panel_keyboard():
+    kb = InlineKeyboardMarkup()
+    #TODO: kb.add(...)
+    return kb
+

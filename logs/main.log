@@ -2,3 +2,9 @@
 2022-07-01 09:53:41,180 - MainProcess - Main       - ERROR    - Im error
 2022-07-01 09:56:10,065 - MainProcess - Main       - ERROR    - 
 2022-07-01 11:08:55,160 - MainProcess - Main       - ERROR    - 
+2022-07-21 09:05:00,860 - MainProcess - Main       - ERROR    - admin_panel_start() missing 1 required positional argument: 'bot'
+2022-07-21 09:08:40,289 - MainProcess - Main       - ERROR    - admin_panel_start() missing 1 required positional argument: 'bot'
+2022-07-21 09:09:52,962 - MainProcess - Main       - ERROR    - admin_panel_start() missing 1 required positional argument: 'bot'
+2022-07-21 09:15:55,116 - MainProcess - Main       - ERROR    - admin_panel_start() missing 2 required positional arguments: 'logger' and 'bot'
+2022-07-21 09:16:21,147 - MainProcess - Main       - ERROR    - admin_panel_start() missing 2 required positional arguments: 'logger' and 'bot'
+2022-07-21 09:26:13,557 - MainProcess - Main       - ERROR    - admin_panel_start() missing 2 required positional arguments: 'logger' and 'bot'

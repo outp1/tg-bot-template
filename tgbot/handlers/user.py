@@ -2,7 +2,7 @@ from aiogram import Dispatcher
 from aiogram.types import Message
 
 
-async def user_start(message: Message):
+async def user_start(message: Message, bot, logger):
     await message.reply("Hello, user!")
 
 

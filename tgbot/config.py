@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from environs import Env
+from aiogram.types import InlineKeyboardButton
 
 from tgbot import data
 
@@ -19,6 +20,7 @@ class DbConfig:
 class TgBot:
     token: str
     admin_ids: list[int]
+    admin_panel_buttons: list[InlineKeyboardButton]
     use_redis: bool
     message_contents: list
 
@@ -32,7 +34,7 @@ class Program:
 
 @dataclass
 class Miscellaneous:
-    other_params: str = None
+    inclose_text: str
 
 
 @dataclass
@@ -51,6 +53,7 @@ def load_config(path: str = None):
         tg_bot=TgBot(
             token=env.str("BOT_TOKEN"),
             admin_ids=list(map(int, env.list("ADMINS"))),
+            admin_panel_buttons=data.admin_panel_buttons,
             use_redis=env.bool("USE_REDIS"),
             message_contents=data.content
         ),
@@ -73,5 +76,7 @@ def load_config(path: str = None):
             logs_token=env.str('LOGS_TOKEN'),
             logs_telegram_id=env.str('LOGS_TELEGRAM_ID')
         ),
-        misc=Miscellaneous()
+        misc=Miscellaneous(
+            inclose_text=env.str('INCLOSE_TEXT')
+            )
     )

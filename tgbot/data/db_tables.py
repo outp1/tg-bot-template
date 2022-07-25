@@ -3,7 +3,7 @@ users = """
     CREATE TABLE IF NOT EXISTS users (
         user_id         TEXT,
         mention         TEXT,
-        reg_date        DATE,
+        reg_date        TIMESTAMPTZ(0),
         rating          NUMERIC(18, 2) DEFAULT 0,
         referal_id      TEXT
     );

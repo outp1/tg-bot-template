@@ -37,17 +37,20 @@ class BotStatistic:
                 regs_number += 1
         return regs_number
 
-    async def last_users(self, num_of_lines: int = 1, reg_date_index: Union[str, int] = None):
-        """Returns a list of users who joined most recently
+    async def sorted_users(self, num_of_lines: int = 1, sort_index: Union[str, int] = None, reverse: bool = True):
+        """Returns a list of users sorted by special index
 
 :param num_of_lines: is num of list lenght
-:param reg_date_index: is name or num of index of users_list dictionary item with registration date info 
+:param sort_index: is name or num of index of users_list dictionary item with registration date info 
+:param reverse: override as False to change list direction
+
+If sort_index is not set, the instance's reg_date_index will be used
 
 """
-        if not reg_date_index:
-            reg_date_index = self.reg_date_index
+        if not sort_index:
+            sort_index = self.reg_date_index
         filtered_user_list = self.users_list
-        filtered_user_list.sort(key=lambda x: x[reg_date_index], reverse=True)
+        filtered_user_list.sort(key=lambda x: x[sort_index], reverse=reverse)
         users_list = []
         i = 0
         for user in filtered_user_list:
@@ -57,19 +60,21 @@ class BotStatistic:
             i += 1
         return users_list
 
-    async def last_users_strings(self, str_format: str, num_of_lines: int = 1,
-            reg_date_index: Union[str, int] = None):
-        """Returns a list of rows of users who joined most recently
+    async def sorted_users_strings(self, str_format: str, num_of_lines: int = 1,
+            sort_index: Union[str, int] = None):
+        """Returns a list of rows of users sorted by special index
 
 :param str_format: is .format() format of rows in list
 :param num_of_lines: is num of list lenght
-:param reg_date_index: is name or num of index of users_list dictionary item with registration date info 
+:param sort_index: is name or num of index of users_list dictionary item with registration date info 
+
+If sort_index is not set, the instance's reg_date_index will be used
 
 """
-        if not reg_date_index:
-            reg_date_index = self.reg_date_index
+        if not sort_index:
+            sort_index = self.reg_date_index
         filtered_user_list = self.users_list
-        filtered_user_list.sort(key=lambda x: x[reg_date_index], reverse=True)
+        filtered_user_list.sort(key=lambda x: x[sort_index], reverse=True)
         strings_list = []
         i = 0
         for user in filtered_user_list:

@@ -7,6 +7,9 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+
+logs/
+
 .Python
 build/
 develop-eggs/
@@ -65,5 +68,3 @@ venv.bak/
 tags
 
 \\
-
-logs/

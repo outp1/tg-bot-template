@@ -16,9 +16,8 @@ async def take_stats_content(user_tables: UserTables, logger: logging.Logger('Ad
     month_regs = await statistic.regs_number(30)
     today_regs = await statistic.regs_number(1)
     fmt_last_users = '<code>{reg_date:%m-%d %H-%M}</code> - {mention}'
-    last_4_users = await statistic.last_users_strings(fmt_last_users, 4, 'reg_date')
+    last_4_users = await statistic.sorted_users_strings(fmt_last_users, 4, 'reg_date')
     last_4_users = '\n'.join(last_4_users)
-    logger.info(last_4_users)
 #    for user in users_list:
 #        if user['reg_date'].strftime('%Y-%m-%d') == today.strftime('%Y-%m-%d'):
 #            today_regs += 1

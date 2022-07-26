@@ -17,6 +17,12 @@ def get_stats_panel_keyboard():
 
 def get_users_panel_keyboard():
     kb = InlineKeyboardMarkup()
-    #TODO: kb.add(...)
+    kb.add(InlineKeyboardButton(text='Найти пользователя', callback_data='adm-action_find-user'))
     return kb
 
+def get_user_moderate_keyboard(user_id: str):
+    kb = InlineKeyboardMarkup()
+    kb.add(InlineKeyboardButton(text='Отправить сообщение', callback_data=f'adm-user_send-message_{user_id}'))
+    kb.add(InlineKeyboardButton(text='Блокировка', callback_data=f'adm-user_ban_{user_id}'))
+    kb.add(InlineKeyboardButton(text='Редактировать', callback_data=f'adm-user_edit_{user_id}'))
+    return kb

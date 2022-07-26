@@ -25,5 +25,9 @@ class UserTables(DatabaseConnection):
                 cursor.execute('SELECT * FROM users')
                 return cursor.fetchall()
         
-
-
+    async def take_user(self, column: str, value):
+        with self.sqlighter as connection:
+            cursor = connection.cursor(cursor_factory=extras.DictCursor)
+            with connection:
+                cursor.execute(f'SELECT * FROM users WHERE {column} = %s', (value,))
+                return cursor.fetchone()

@@ -49,11 +49,11 @@ If sort_index is not set, the instance's reg_date_index will be used
 """
         if not sort_index:
             sort_index = self.reg_date_index
-        filtered_user_list = self.users_list
-        filtered_user_list.sort(key=lambda x: x[sort_index], reverse=reverse)
+        sorted_user_list = self.users_list
+        sorted_user_list.sort(key=lambda x: x[sort_index], reverse=reverse)
         users_list = []
         i = 0
-        for user in filtered_user_list:
+        for user in sorted_user_list:
             users_list.append(user)
             if i >= num_of_lines:
                 break
@@ -73,14 +73,32 @@ If sort_index is not set, the instance's reg_date_index will be used
 """
         if not sort_index:
             sort_index = self.reg_date_index
-        filtered_user_list = self.users_list
-        filtered_user_list.sort(key=lambda x: x[sort_index], reverse=True)
+        sorted_user_list = self.users_list
+        sorted_user_list.sort(key=lambda x: x[sort_index], reverse=True)
         strings_list = []
         i = 0
-        for user in filtered_user_list:
+        for user in sorted_user_list:
             strings_list.append(str_format.format(**user))
             if i >= num_of_lines:
                 break
             i += 1
         return strings_list
+
+    #TODO
+    async def list_of_the_best(self, num_of_lines: int = 1, *sort_indexes, 
+            logger: logging.Logger = logging, reverse: bool = True):
+        if not sort_indexes:
+            raise 'Sort indexes were not set'
+        sorted_users = sorted(self.users_list, key=lambda x: list(x[i] for i in sort_indexes), reverse=reverse)
+        users_list = []
+        i = 0
+        for user in sorted_users:
+            if i >= num_of_lines:
+                break
+            users_list.append(user)
+            i += 1
+        return users_list
+        
+        
+        
 

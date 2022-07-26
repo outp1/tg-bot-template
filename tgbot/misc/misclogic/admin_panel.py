@@ -2,21 +2,24 @@ import datetime
 import logging
 
 import pytz
+from aiogram import Bot, types
+from aiogram.dispatcher.storage import FSMContext
 
 from tgbot.misc import statisticer
 from tgbot.models import UserTables
 
 
 #TODO
-async def take_stats_content(user_tables: UserTables, logger: logging.Logger('AdmPanel'),
+async def take_stats_content(user_tables: UserTables, logger: logging.Logger = logging,
         bot_name: str = 'Без имени'):
     today = datetime.datetime.now(pytz.timezone('Europe/Moscow')).strftime('%d.%m.%Y')
     users_list = await user_tables.take_all_users()
     statistic = statisticer.BotStatistic(users_list, logger=logger)
     month_regs = await statistic.regs_number(30)
     today_regs = await statistic.regs_number(1)
-    fmt_last_users = '<code>{reg_date:%m-%d %H-%M}</code> - {mention}'
+    fmt_last_users = '<code>{reg_date:%m-%d %H-%M}</code> - {mention} - реф. {referal_id}'
     last_4_users = await statistic.sorted_users_strings(fmt_last_users, 4, 'reg_date')
+    last_3_adm_actions = '<code>@mdaroff - 25.07 9:44 - Новая рекламный пост на 12:20</code> \n<code>@mdaroff - 25.07 8:13 - Подделка статистики </code>' #TODO 
     last_4_users = '\n'.join(last_4_users)
 #    for user in users_list:
 #        if user['reg_date'].strftime('%Y-%m-%d') == today.strftime('%Y-%m-%d'):
@@ -26,6 +29,8 @@ async def take_stats_content(user_tables: UserTables, logger: logging.Logger('Ad
     text = f"""
 Статистика бота <b><i>{bot_name}</i></b> на <b><i>{today}</i></b>
 
+Пользователей - <code>{len(users_list)}</code>
+
 <b>Новые пользователи</b>
 Сегодня - <code>{today_regs}</code>
 За месяц - <code>{month_regs}</code>
@@ -33,10 +38,57 @@ async def take_stats_content(user_tables: UserTables, logger: logging.Logger('Ad
 {last_4_users}
 - -
 
+Последние действия администрации:
+{last_3_adm_actions}
+
 <i>Лучшие телеграмм боты - @mdaroff</i>
 """
     return text
 
 #TODO
-async def take_users_content():
-    return 'Some result \nChoose action:'
+async def take_users_content(user_tables: UserTables, logger: logging.Logger = logging):
+    users_list = await user_tables.take_all_users()
+    statistic = statisticer.BotStatistic(users_list, logger=logger)
+    best_users = await statistic.list_of_the_best(20, 'reg_date', 'rating', logger=logger)
+    best_users_strings = []
+    for user in best_users: 
+        best_users_strings.append(
+            f'{user["mention"]} <code>{user["user_id"]}</code> - д.р: <code>{user["reg_date"].strftime("%d-%m-%Y")}</code> - рейтинг: {user["rating"]}')
+    best_users_text = '\n'.join(best_users_strings)
+    text = f"""
+
+<b>Топ пользователей:</b>
+{best_users_text}
+
+<i>Выберите действие:</i>
+"""
+    return text
+
+
+async def take_find_user_content(message: types.Message, user_tables: UserTables, 
+        state: FSMContext, bot: Bot, logger: logging.Logger = logging):
+    search_means = message.text
+    if search_means.isdigit():
+        user = await user_tables.take_user('user_id', search_means)
+        await state.finish()
+    elif search_means.startswith('@'):
+        user = await user_tables.take_user('mention', search_means)
+        await state.finish()
+    else: 
+        return None
+    if user["referal_id"]: 
+        ref_user = await bot.get_chat(user["referal_id"])
+        referal = f'Пригласивший: <code>{ref_user.mention}</code>'
+    else: 
+        referal = f'Пригласивший: никто'
+    text = f"""
+<b>Данные пользователя - {user["mention"]}</b>
+
+ID: <code>{user["user_id"]}</code>
+Дата регистрации: <code>{user["reg_date"]}</code>
+Рейтинг: <code>{user["rating"]}</code>
+{referal}
+
+<i>Выберите действие:</i>
+"""
+    return text

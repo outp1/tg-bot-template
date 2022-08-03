@@ -31,3 +31,9 @@ class UserTables(DatabaseConnection):
             with connection:
                 cursor.execute(f'SELECT * FROM users WHERE {column} = %s', (value,))
                 return cursor.fetchone()
+
+    async def ban_user(self, user, unbanned_date: datetime = None):
+        with self.sqlighter as connection:
+            cursor = connection.cursor(cursor_factory=extras.DictCursor)
+            with connection:
+                cursor.execute(f'UPDATE users SET unbanned_date = %s WHERE user = %s', (unbanned_date, user))        

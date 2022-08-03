@@ -92,3 +92,25 @@ ID: <code>{user["user_id"]}</code>
 <i>Выберите действие:</i>
 """
     return text
+
+#TODO
+async def ban_user(user: str, user_tables: UserTables, bot: Bot, num_of: str = None, 
+        unit: str = None, logger: logging.Logger = logging):
+    now = datetime.datetime.now(tz=pytz.timezone('Europe/Moscow'))
+    if num_of:
+        if unit == 'h':
+            block_time = datetime.timedelta(hours=int(num_of)) 
+        elif unit == 'm':
+            block_time = datetime.timedelta(minutes=int(num_of))
+        elif unit == 'd':
+            block_time = datetime.timedelta(days=int(num_of))
+        else:
+            block_time = datetime.timedelta(minutes=int(num_of))
+    else:
+        block_time = datetime.timedelta(days=8000)
+    unbanned_date = now + block_time
+    unbanned_date_text_format = unbanned_date.strftime('%d-%m-%Y %H:%M')
+    logger.info(f'DATE: {unbanned_date}')
+    logger.info(f'USER: {user}')
+    await user_tables.ban_user(user, unbanned_date)
+    await bot.send_message(user, f'Вам прилетела блокировка до <code>{unbanned_date_text_format}</code>')

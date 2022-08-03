@@ -5,7 +5,11 @@ users = """
         mention         TEXT,
         reg_date        TIMESTAMPTZ(0),
         rating          NUMERIC(18, 2) DEFAULT 0,
-        referal_id      TEXT
+        referal_id      TEXT,
+        ban_date        TIMESTAMPTZ(0),
+        unbanned_date   TIMESTAMPTZ(0),
+        user_history    TEXT,
+        message_history TEXT
     );
 """
 

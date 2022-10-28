@@ -35,6 +35,7 @@ class Program:
 @dataclass
 class Miscellaneous:
     inclose_text: str
+    support_mention: str
 
 
 @dataclass
@@ -77,6 +78,7 @@ def load_config(path: str = None):
             logs_telegram_id=env.str('LOGS_TELEGRAM_ID')
         ),
         misc=Miscellaneous(
-            inclose_text=env.str('INCLOSE_TEXT')
+            inclose_text=env.str('INCLOSE_TEXT'),
+            support_mention=env.str('SUPPORT_MENTION')
             )
     )

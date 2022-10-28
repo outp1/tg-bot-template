@@ -4,7 +4,7 @@ import pytz
 from .pgsqlighter import DatabaseConnection
 
 
-# Messages content database Class
+# Tables containing content for some posts
 class ContentTables(DatabaseConnection):
 
     def __init__(self, db_name: str, auth: dict, tables: list, default_contents: list = None):

@@ -3,7 +3,7 @@ import pytz
 
 from .pgsqlighter import DatabaseConnection
 
-# Database Class example
+# Database table class example
 class UserTables(DatabaseConnection): 
     
     def __init__(self, db_name: str, auth: dict, tables: list):

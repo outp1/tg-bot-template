@@ -120,9 +120,40 @@ async def admin_advertpanel(call: types.CallbackQuery, advertising_tables: Adver
         await state.update_data(msg=msg)
         await AdminStates.find_advert.set()
 
+async def send_advert_to_user(advert, user_id, bot: Bot):
+    if advert['inline_buts']:
+        if type(advert['inline_buts']) is dict:
+            kb = types.InlineKeyboardMarkup()
+            _type_value = {advert['inline_buts']['_type']: advert['inline_buts']['content']}
+            kb.add(types.InlineKeyboardButton(text=advert['text'], **_type_value))
+        else:
+            kb = types.InlineKeyboardMarkup()
+            for b in advert['inline_buts']:
+                _type_value = {b['_type']: b['content']}
+                kb.add(types.InlineKeyboardButton(text=b['text'], **_type_value))
+    else:
+        kb = types.InlineKeyboardMarkup()
+    if advert['media_type'] == 'media_group':
+        medias = []
+        for obj in advert['media']:
+            medias.append(obj)
+        medias[0]['caption'] = advert['text'] 
+        media_group = types.MediaGroup()
+        media_group.attach_many(*medias)
+        msg = await bot.send_media_group(chat_id=user_id, media=media_group)
+    elif advert['media_type'] == 'photo':
+        msg = await bot.send_photo(chat_id=user_id, photo=advert['media'], caption=advert['text'], reply_markup=kb)
+    elif advert['media_type'] == 'video':
+        msg = await bot.send_video(chat_id=user_id, video=advert['media'], caption=advert['text'], reply_markup=kb)
+    elif advert['media_type'] == 'document':
+        msg = await bot.send_document(chat_id=user_id, document=advert['document'], caption=advert['text'], reply_markup=kb)
+    else: 
+        msg = await bot.send_message(chat_id=user_id, text=advert['text'], reply_markup=kb)
+    return msg
 
-async def send_advert_preview(advert, reply_markup, advertising_tables: AdvertisingTables, message: types.Message = None,
-        call: types.CallbackQuery = None, logger: logging.Logger = logging):
+async def send_advert_preview(advert, reply_markup, advertising_tables: AdvertisingTables, bot: Bot, 
+        message: types.Message = None, call: types.CallbackQuery = None, 
+        logger: logging.Logger = logging):
     if advert['sending_date'] is None:
         sending_date = 'Не установлено'
     else:
@@ -143,46 +174,19 @@ ID рекламы: <code>{advert['advert_id']}</code>
 """
     if message:
         msg1 = await message.answer('Предпросмотр:')
-        if advert['inline_buts']:
-            if type(advert['inline_buts']) is dict:
-                kb = types.InlineKeyboardMarkup()
-                _type_value = {advert['inline_buts']['_type']: advert['inline_buts']['content']}
-                kb.add(types.InlineKeyboardButton(text=advert['text'], **_type_value))
-            else:
-                kb = types.InlineKeyboardMarkup()
-                for b in advert['inline_buts']:
-                    _type_value = {b['_type']: b['content']}
-                    kb.add(types.InlineKeyboardButton(text=b['text'], **_type_value))
-        else:
-            kb = types.InlineKeyboardMarkup()
         try:
-            if advert['media_type'] == 'media_group':
-                medias = []
-                for obj in advert['media']:
-                    medias.append(obj)
-                medias[0]['caption'] = advert['text'] 
-                media_group = types.MediaGroup()
-                media_group.attach_many(*medias)
-                msg2 = await message.answer_media_group(media_group)
-            elif advert['media_type'] == 'photo':
-                msg2 = await message.answer_photo(photo=advert['media'], caption=advert['text'], reply_markup=kb)
-            elif advert['media_type'] == 'video':
-                msg2 = await message.answer_video(video=advert['media'], caption=advert['text'], reply_markup=kb)
-            elif advert['media_type'] == 'document':
-                msg2 = await message.answer_document(document=advert['document'], caption=advert['text'], reply_markup=kb)
-            else: 
-                msg2 = await message.answer(text=advert['text'], reply_markup=kb)
-            msg3 = await message.answer(text, reply_markup=reply_markup)
+            msg2 = await send_advert_to_user(advert, message.from_user.id, bot)
         except BadRequest:
             logger.info('ERROR ->')
             logger.info(traceback.format_exc())
             logger.info('START REMOVING BROKE KEYBOARD')
             await advertising_tables.update_advertising(advert['advert_id'], 'inline_buts', None)
             return await message.answer('Ошибка клавиатуры, удаление. Попробуйте ещё раз.')
+        msg3 = await message.answer(text, reply_markup=reply_markup)
         return [msg1, msg2, msg3]
 
 async def advert_message_edit_menu(advertising_tables: AdvertisingTables, 
-        logger: logging.Logger, state: FSMContext,
+        logger: logging.Logger, state: FSMContext, bot: Bot,
         message: types.Message = None, call: types.CallbackQuery = None, advert_id = None):
     data = await state.get_data()
     try:
@@ -193,7 +197,7 @@ async def advert_message_edit_menu(advertising_tables: AdvertisingTables,
         if advert_id:
             kbs = AdminPanelKeyboards.get_advert_edit_keybord(advert_id, 'multiInclose_with_state')
             advert = await advertising_tables.get_advertising('advert_id', advert_id)
-            msgs = await send_advert_preview(advert, kbs, advertising_tables, message=message, logger=logger)  
+            msgs = await send_advert_preview(advert, kbs, advertising_tables, bot, message=message, logger=logger)  
             await state.update_data(msgs=msgs)
         elif data: 
             kbs = AdminPanelKeyboards.get_advert_edit_keybord(data['advert_id'], 'multiInclose_with_state')
@@ -250,8 +254,14 @@ async def advert_edit_actions(call: types.CallbackQuery, advertising_tables: Adv
             text_buts = '\n'.join(buts)
             text = f'Кнопки объявления:\n\n{text_buts}'
             await call.message.answer(text, reply_markup=kb)
-    elif action == '':
-        pass
+    elif action == 'send':
+        kb = types.InlineKeyboardMarkup()
+        kb.add(types.InlineKeyboardButton(text='Подтверждаю', callback_data=f'confirm-advert-sending_{advert_id}'))
+        text = f"""
+<b>Вы уверены что хотите сделать рассылку рекламы <code>{advert_id}</code>?</b>
+Подтвердите:
+"""
+        await call.message.answer(text, reply_markup=kb)
 
 async def advert_button_add(call: types.CallbackQuery, advertising_tables: AdvertisingTables,
         bot: Bot, logger: logging.Logger, state: FSMContext):
@@ -320,7 +330,7 @@ async def advert_kbcontent(message: types.Message, state: FSMContext,
     else:
         inline_but = json.dumps(inline_but)
     await advertising_tables.update_advertising(data['advert_id'], 'inline_buts', inline_but)
-    await advert_message_edit_menu(message=message, advert_id=data['advert_id'], 
+    await advert_message_edit_menu(message=message, advert_id=data['advert_id'], bot=bot,
             logger=logger, state=state, advertising_tables=advertising_tables)
     
 # ? Move to other module ?
@@ -347,7 +357,7 @@ async def find_advert_content(advert_id: str, message: types.Message, advertisin
     if advert_id.isdigit():
         advert = await advertising_tables.get_advertising('advert_id', advert_id)
         if advert: 
-            await advert_message_edit_menu(advertising_tables, advert_id=advert['advert_id'], 
+            await advert_message_edit_menu(advertising_tables, advert_id=advert['advert_id'], bot=bot,
                     logger=logger, state=state, message=message)
         else:
             kb = keyboards.inclose(bot["config"].misc.inclose_text)
@@ -377,7 +387,7 @@ async def advert_text(message: types.Message, state: FSMContext,
     except:
         pass
     await advertising_tables.update_advertising(data['advert_id'], 'text', message.text)
-    await advert_message_edit_menu(advertising_tables, advert_id=data['advert_id'], logger=logger, 
+    await advert_message_edit_menu(advertising_tables, advert_id=data['advert_id'], logger=logger, bot=bot,
             state=state, message=message)
 
 #TODO deleting_messages
@@ -414,7 +424,7 @@ async def advert_media(message: types.Message, state: FSMContext,
             return await message.answer('Ошибка. Отправьте медиа:', 
                     reply_markup=keyboards.inclose(bot["config"].misc.inclose_text))
     advert = await advertising_tables.get_advertising('advert_id', data['advert_id'])
-    await advert_message_edit_menu(advertising_tables, logger, message=message, 
+    await advert_message_edit_menu(advertising_tables, logger, message=message, bot=bot,
             state=state, advert_id=data['advert_id'])
     try: 
         await bot.delete_message(message.chat.id, data['msg'].message_id)
@@ -439,9 +449,22 @@ async def newad_text(message: types.Message, advertising_tables: AdvertisingTabl
     await state.update_data(advert_id=advert_id)
     await advertising_tables.add_advertising(advert_id=advert_id, advert_header=data['header'],
             text=data['text'])
-    await advert_message_edit_menu(advertising_tables, logger=logger, message=message, state=state) 
+    await advert_message_edit_menu(advertising_tables, logger=logger, bot=bot, message=message, state=state) 
 
-
+async def advert_send(call: types.CallbackQuery, advertising_tables: AdvertisingTables, 
+        user_tables: UserTables, logger: logging.Logger, bot: Bot):
+    try: 
+        await bot.delete_message(call.from_user.id, call.message.message_id)
+    except:
+        pass
+    advert = await advertising_tables.get_advertising('advert_id', call.data.split('_')[1])
+    users = await user_tables.take_all_users()
+    for user in users:
+        try:
+            await send_advert_to_user(advert, user['user_id'], bot)
+        except:
+            logger.error(traceback.format_exc())
+    
 # All admin commands starting with '!'
 async def admin_commands(message: types.Message, bot: Bot,
         logger: logging.Logger, user_tables: UserTables, 
@@ -529,5 +552,7 @@ def register_admin(dp: Dispatcher):
     dp.register_callback_query_handler(popup_message_handler, lambda call: call.data.startswith('popup-message_'), state='*')
 
     dp.register_callback_query_handler(advert_button_add, lambda call: call.data.startswith('advert-kb_'))
+
+    dp.register_callback_query_handler(advert_send, lambda call: call.data.startswith('confirm-advert-sending_'))
     #dp.register_callback_query_handler(check_call)
 

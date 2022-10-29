@@ -10,6 +10,7 @@ from aiogram.utils.exceptions import BadRequest
 from tgbot.models import (UserTables, ContentTables, 
         ModeratingHistoryTables, AdvertisingTables)
 from tgbot import keyboards
+from tgbot.keyboards import AdminPanelKeyboards
 from tgbot.misc.states import AdminStates
 from tgbot.misc.tools import safe_list_get, generate_id_async
 from .deep_logic import admin_panel
@@ -21,7 +22,7 @@ async def admin_panel_start(message: types.Message, logger, bot: Bot, state: FSM
         await state.finish()
     except:
         pass
-    kbs = keyboards.get_admin_panel_keyboard(bot["config"].tg_bot.admin_panel_buttons)
+    kbs = AdminPanelKeyboards.get_admin_panel_keyboard(bot["config"].tg_bot.admin_panel_buttons)
     kbs.add(keyboards.inclose_button(text=bot["config"].misc.inclose_text))
     await message.answer("Hello, admin!", reply_markup=kbs)
 
@@ -36,17 +37,17 @@ async def admin_panel_actions(call: types.CallbackQuery, state: FSMContext,
     action = call.data.split('_')[1]
     if action == 'stats':    
         content = await admin_panel.take_stats_content(user_tables, logger)
-        kbs = keyboards.get_stats_panel_keyboard()
+        kbs = AdminPanelKeyboards.get_stats_panel_keyboard()
         kbs.add(keyboards.inclose_button(text=bot["config"].misc.inclose_text))
         await call.message.answer(content, reply_markup=kbs)
     elif action == 'users':
         content = await admin_panel.take_users_content(user_tables, logger)
-        kbs = keyboards.get_users_panel_keyboard()
+        kbs = AdminPanelKeyboards.get_users_panel_keyboard()
         kbs.add(keyboards.inclose_button(text=bot["config"].misc.inclose_text))
         await call.message.answer(content, reply_markup=kbs)
     elif action == 'advertisements': 
         content = await admin_panel.take_advert_content(advertising_tables, logger)
-        kbs = keyboards.get_advert_panel_keyboard()
+        kbs = AdminPanelKeyboards.get_advert_panel_keyboard()
         kbs.add(keyboards.inclose_button(text=bot["config"].misc.inclose_text))
         await call.message.answer(content, reply_markup=kbs)
 
@@ -78,7 +79,7 @@ async def find_user_state(message: types.Message, state: FSMContext,
         return await message.answer('<b>Данные введены неверно. Попробуйте ещё раз:</b>', 
                 reply_markup=keyboards.inclose(bot["config"].misc.inclose_text))
     else:
-        kb = keyboards.get_user_moderate_keyboard(message.from_user.id)
+        kb = AdminPanelKeyboards.get_user_moderate_keyboard(message.from_user.id)
         kb.add(keyboards.inclose_button(bot["config"].misc.inclose_text))
         await message.answer(content, reply_markup=kb)
 
@@ -110,7 +111,7 @@ async def admin_advertpanel(call: types.CallbackQuery, advertising_tables: Adver
     action = call.data.split('_')[1]
     if action == 'full':
         text = await admin_panel.get_content_advertpanel_full(call, advertising_tables, logger)
-        kb = keyboards.get_advertfull_keyboard()
+        kb = AdminPanelKeyboards.get_advertfull_keyboard()
         kb.add(keyboards.inclose_button(text=bot['config'].misc.inclose_text))
         await call.message.answer(text, reply_markup=kb)
     elif action == 'edit':
@@ -190,12 +191,12 @@ async def advert_message_edit_menu(advertising_tables: AdvertisingTables,
         pass
     if message:
         if advert_id:
-            kbs = keyboards.get_advert_edit_keybord(advert_id, 'multiInclose_with_state')
+            kbs = AdminPanelKeyboards.get_advert_edit_keybord(advert_id, 'multiInclose_with_state')
             advert = await advertising_tables.get_advertising('advert_id', advert_id)
             msgs = await send_advert_preview(advert, kbs, advertising_tables, message=message, logger=logger)  
             await state.update_data(msgs=msgs)
         elif data: 
-            kbs = keyboards.get_advert_edit_keybord(data['advert_id'], 'multiInclose_with_state')
+            kbs = AdminPanelKeyboards.get_advert_edit_keybord(data['advert_id'], 'multiInclose_with_state')
             msg1 = await message.answer('<b>Предпросмотр:</b>')
             msg2 = await message.answer(data['text'])
             msg3 = await message.answer('Выберите действие', reply_markup=kbs)
@@ -217,11 +218,11 @@ async def advert_edit_actions(call: types.CallbackQuery, advertising_tables: Adv
     action, advert_id = data[1], data[2]
     #TODO: Other media types support
     if action == 'media':
-        msg = await call.message.answer('Отправьте медиа одним сообщением: ', reply_markup=keyboards.return_kb(data[2]))
+        msg = await call.message.answer('Отправьте медиа одним сообщением: ', reply_markup=AdminPanelKeyboards.return_kb(data[2]))
         await state.update_data(advert_id=advert_id, msg=msg)
         await AdminStates.advert_media.set() 
     elif action == 'text':
-        msg = await call.message.answer('Отправьте новый текст для объявления', reply_markup=keyboards.return_kb(data[2]))
+        msg = await call.message.answer('Отправьте новый текст для объявления', reply_markup=AdminPanelKeyboards.return_kb(data[2]))
         await state.update_data(advert_id=advert_id, msg=msg)
         await AdminStates.advert_text.set()
     elif action == 'remove':
@@ -237,7 +238,7 @@ async def advert_edit_actions(call: types.CallbackQuery, advertising_tables: Adv
                     types.InlineKeyboardButton(text='Добавить', callback_data=f'advert-kb_add_{advert_id}'))
         kb.add(types.InlineKeyboardButton(text='🔙', callback_data=f'advert-return_{advert_id}'))
         if not inline_buts:
-            msg = await call.message.answer('Введите текст кнопки:', reply_markup=keyboards.return_kb(data[2]))
+            msg = await call.message.answer('Введите текст кнопки:', reply_markup=AdminPanelKeyboards.return_kb(data[2]))
             await AdminStates.advert_kbtext.set()
             await state.update_data(msg=msg, advert_id=advert_id)
         elif type(inline_buts) is dict:
@@ -261,7 +262,7 @@ async def advert_button_add(call: types.CallbackQuery, advertising_tables: Adver
         pass
     if data[1] == 'clean-add':
         await advertising_tables.update_advertising(data[2], 'inline_but', None)
-    msg = await call.message.answer('Введите текст кнопки:', reply_markup=keyboards.return_kb(data[2]))
+    msg = await call.message.answer('Введите текст кнопки:', reply_markup=AdminPanelKeyboards.return_kb(data[2]))
     await AdminStates.advert_kbtext.set()
     await state.update_data(msg=msg, advert_id=data[2])
 
@@ -275,7 +276,7 @@ async def advert_kbtext(message: types.Message, state: FSMContext, bot: Bot):
     except:
         pass
     await state.update_data(kb_text=message.text)
-    kb = keyboards.get_kb_type_choosing()
+    kb = AdminPanelKeyboards.get_kb_type_choosing()
     kb.add(keyboards.inclose_button(bot["config"].misc.inclose_text))
     msg = await message.answer('Выберите тип кнопки:', reply_markup=kb)
     await state.update_data(text=message.text, msg=msg)
@@ -474,7 +475,7 @@ async def admin_commands(message: types.Message, bot: Bot,
         if len(data) < 2:
             return await message.reply('Неверный синтаксис. Необходимо передать больше иноформации. \\adm для справки.')
         content = await admin_panel.get_user_info(data[1], user_tables, bot, message, logger)
-        kb = keyboards.get_user_moderate_keyboard(message.from_user.id)
+        kb = AdminPanelKeyboards.get_user_moderate_keyboard(message.from_user.id)
         kb.add(keyboards.inclose_button(bot["config"].misc.inclose_text))
         await message.answer(content, reply_markup=kb)
     elif action == '!new_ad': #new advertising message

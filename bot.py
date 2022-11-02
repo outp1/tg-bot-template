@@ -20,6 +20,7 @@ from tgbot.models import (UserTables, ContentTables,
         ModeratingHistoryTables, AdvertisingTables)
 from tgbot.misc import botlogging, abc_classes
 from tgbot.services.banned_users_service import banned_users_service
+from tgbot.services.ad_sending_service import AdSendingService
 
 
 def register_all_middlewares(dp):
@@ -65,11 +66,13 @@ async def main():
     bot['config'] = config
 
     # Db connection objects
-    bot['user_tables'] = UserTables(config.db.database, config.db.auth, config.db.tables)
+    bot['user_tables'] = UserTables(config.db.database, config.db.auth, config.db.tables, timezone=config.program.timezone)
     bot['content_tables'] = ContentTables(config.db.database, config.db.auth, 
-            config.db.tables, config.tg_bot.message_contents)
-    bot['modhistory_tables'] = ModeratingHistoryTables(config.db.database, config.db.auth, config.db.tables, logger)
-    bot['advertising_tables'] = AdvertisingTables(config.db.database, config.db.auth, config.db.tables, logger)
+            config.db.tables, default_contents=config.tg_bot.message_contents, timezone=config.program.timezone)
+    bot['modhistory_tables'] = ModeratingHistoryTables(config.db.database, config.db.auth, config.db.tables, 
+            timezone=config.program.timezone, logger=logger)
+    bot['advertising_tables'] = AdvertisingTables(config.db.database, config.db.auth, config.db.tables, 
+            timezone=config.program.timezone, logger=logger)
 
     bot['logger'] = logger
 
@@ -82,6 +85,9 @@ async def main():
     # Banned users service initialization
     asyncio.create_task(banned_users_service(bot['banned_users'], bot['user_tables'], logger))
 
+    # Ad sending service initialization
+    AdService = AdSendingService(bot['advertising_tables'], bot['user_tables'], bot, logger)
+    asyncio.create_task(AdService.start(10))
 
     # start
     try:

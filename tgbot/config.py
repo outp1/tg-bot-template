@@ -30,6 +30,7 @@ class Program:
     logs_folder: str
     logs_token: str
     logs_telegram_id: str
+    timezone: str
 
 
 @dataclass
@@ -75,7 +76,8 @@ def load_config(path: str = None):
         program=Program(
             logs_folder=env.str('LOGS_FOLDER'),
             logs_token=env.str('LOGS_TOKEN'),
-            logs_telegram_id=env.str('LOGS_TELEGRAM_ID')
+            logs_telegram_id=env.str('LOGS_TELEGRAM_ID'),
+            timezone=env.str('TZ')
         ),
         misc=Miscellaneous(
             inclose_text=env.str('INCLOSE_TEXT'),

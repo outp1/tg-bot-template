@@ -2,10 +2,12 @@ import logging
 from typing import Union
 import json
 import traceback
+import datetime
 
 from aiogram import Dispatcher, Bot, types
 from aiogram.dispatcher.storage import FSMContext
 from aiogram.utils.exceptions import BadRequest
+import pytz
 
 from tgbot.models import (UserTables, ContentTables, 
         ModeratingHistoryTables, AdvertisingTables)
@@ -79,7 +81,7 @@ async def find_user_state(message: types.Message, state: FSMContext,
         return await message.answer('<b>Данные введены неверно. Попробуйте ещё раз:</b>', 
                 reply_markup=keyboards.inclose(bot["config"].misc.inclose_text))
     else:
-        kb = AdminPanelKeyboards.get_user_moderate_keyboard(message.from_user.id)
+        kb = AdminPanelKeyboards.get_user_moderate_keyboard(message.text)
         kb.add(keyboards.inclose_button(bot["config"].misc.inclose_text))
         await message.answer(content, reply_markup=kb)
 
@@ -157,7 +159,7 @@ async def send_advert_preview(advert, reply_markup, advertising_tables: Advertis
     if advert['sending_date'] is None:
         sending_date = 'Не установлено'
     else:
-        sending_date = advert['sending_date']
+        sending_date = datetime.datetime.strftime(advert['sending_date'], '%H:%M %Y.%m.%d')
     if advert['sending_status'] == True:
         status = 'Отправлено'
     else:
@@ -167,8 +169,8 @@ async def send_advert_preview(advert, reply_markup, advertising_tables: Advertis
 
 ID рекламы: <code>{advert['advert_id']}</code> 
 
-Отправка: <code>{sending_date}</code>
-Статус: <code>{status}</code>
+Дата отправки: <code>{sending_date}</code>
+Статус отправки:: <code>{status}</code>
 
 <b>Выберите действие:</b>
 """
@@ -222,11 +224,11 @@ async def advert_edit_actions(call: types.CallbackQuery, advertising_tables: Adv
     action, advert_id = data[1], data[2]
     #TODO: Other media types support
     if action == 'media':
-        msg = await call.message.answer('Отправьте медиа одним сообщением: ', reply_markup=AdminPanelKeyboards.return_kb(data[2]))
+        msg = await call.message.answer('Отправьте медиа одним сообщением: ', reply_markup=AdminPanelKeyboards.back_to_advert_kb(data[2]))
         await state.update_data(advert_id=advert_id, msg=msg)
         await AdminStates.advert_media.set() 
     elif action == 'text':
-        msg = await call.message.answer('Отправьте новый текст для объявления', reply_markup=AdminPanelKeyboards.return_kb(data[2]))
+        msg = await call.message.answer('Отправьте новый текст для объявления', reply_markup=AdminPanelKeyboards.back_to_advert_kb(data[2]))
         await state.update_data(advert_id=advert_id, msg=msg)
         await AdminStates.advert_text.set()
     elif action == 'remove':
@@ -242,7 +244,7 @@ async def advert_edit_actions(call: types.CallbackQuery, advertising_tables: Adv
                     types.InlineKeyboardButton(text='Добавить', callback_data=f'advert-kb_add_{advert_id}'))
         kb.add(types.InlineKeyboardButton(text='🔙', callback_data=f'advert-return_{advert_id}'))
         if not inline_buts:
-            msg = await call.message.answer('Введите текст кнопки:', reply_markup=AdminPanelKeyboards.return_kb(data[2]))
+            msg = await call.message.answer('Введите текст кнопки:', reply_markup=AdminPanelKeyboards.back_to_advert_kb(data[2]))
             await AdminStates.advert_kbtext.set()
             await state.update_data(msg=msg, advert_id=advert_id)
         elif type(inline_buts) is dict:
@@ -262,6 +264,27 @@ async def advert_edit_actions(call: types.CallbackQuery, advertising_tables: Adv
 Подтвердите:
 """
         await call.message.answer(text, reply_markup=kb)
+    elif action == 'date':
+        advert = await advertising_tables.get_advertising('advert_id', advert_id)
+        if advert['sending_date']:
+            sending_date = datetime.datetime.strftime(advert['sending_date'], '%H:%M %Y.%m.%d')
+        else:
+            sending_date = 'Не установлено'
+        if advert['sending_status'] == True:
+            sending_status = 'Отправлено'
+        else:
+            sending_status = 'Не отправлено'
+        text = f"""
+ID рекламы: <code>{advert_id}</code>
+
+Дата отправки: <b>{sending_date}</b>
+Статус отправки: <b>{sending_status}</b>
+
+Выберите действие:
+"""
+        kb = AdminPanelKeyboards.advert_send_date_menu_kb(advert_id)
+        kb.add(AdminPanelKeyboards.back_to_advert_button(advert_id))
+        await call.message.answer(text, reply_markup=kb)
 
 async def advert_button_add(call: types.CallbackQuery, advertising_tables: AdvertisingTables,
         bot: Bot, logger: logging.Logger, state: FSMContext):
@@ -272,7 +295,7 @@ async def advert_button_add(call: types.CallbackQuery, advertising_tables: Adver
         pass
     if data[1] == 'clean-add':
         await advertising_tables.update_advertising(data[2], 'inline_but', None)
-    msg = await call.message.answer('Введите текст кнопки:', reply_markup=AdminPanelKeyboards.return_kb(data[2]))
+    msg = await call.message.answer('Введите текст кнопки:', reply_markup=AdminPanelKeyboards.back_to_advert_kb(data[2]))
     await AdminStates.advert_kbtext.set()
     await state.update_data(msg=msg, advert_id=data[2])
 
@@ -478,27 +501,27 @@ async def admin_commands(message: types.Message, bot: Bot,
     action = data[0]
     if action == '!ban':
         if len(data) < 2:
-            return await message.reply('Неверный синтаксис. Необходимо передать больше иноформации. \\adm для справки.') 
+            return await message.reply('Неверный синтаксис. Необходимо передать больше иноформации. /adm для справки.') 
         await admin_panel.ban_user(user=data[1], user_tables=user_tables, 
                 bot=bot, modhistory_tables=modhistory_tables, 
                 num_of=safe_list_get(data, 2, None), unit=safe_list_get(data, 3, None), 
                 message=message, logger=logger) #TODO
     elif action == '!unban':
         if len(data) < 2:
-            return await message.reply('Неверный синтаксис. Необходимо передать больше иноформации. \\adm для справки.') 
+            return await message.reply('Неверный синтаксис. Необходимо передать больше иноформации. /adm для справки.') 
         await admin_panel.unban_user(user=data[1], user_tables=user_tables, modhistory_tables=modhistory_tables, 
                 bot=bot, message=message, logger=logger)
     elif action == '!adm_send_message':
         if len(data) < 3:
-            return await message.reply('Неверный синтаксис. Необходимо передать больше иноформации. \\adm для справки.') 
+            return await message.reply('Неверный синтаксис. Необходимо передать больше иноформации. /adm для справки.') 
         text = ' '.join(data[2:])
         await admin_panel.message_to_user(user=data[1], user_tables=user_tables, bot=bot,
                 message_text=text, message=message, logger=logger)
     elif action == '!info': #TODO: recieve info with reply 
         if len(data) < 2:
-            return await message.reply('Неверный синтаксис. Необходимо передать больше иноформации. \\adm для справки.')
+            return await message.reply('Неверный синтаксис. Необходимо передать больше иноформации. /adm для справки.')
         content = await admin_panel.get_user_info(data[1], user_tables, bot, message, logger)
-        kb = AdminPanelKeyboards.get_user_moderate_keyboard(message.from_user.id)
+        kb = AdminPanelKeyboards.get_user_moderate_keyboard(data[1])
         kb.add(keyboards.inclose_button(bot["config"].misc.inclose_text))
         await message.answer(content, reply_markup=kb)
     elif action == '!new_ad': #new advertising message
@@ -515,6 +538,54 @@ async def admin_commands(message: types.Message, bot: Bot,
     elif action == '!edit_user':
         pass #TODO editing user by "!edit_user <key> <value>" format
 
+async def advert_sending_date_actions(call: types.CallbackQuery, state: FSMContext, logger: logging.Logger):
+    data = call.data.split('_')
+    action, advert_id = data[1], data[2]
+    if action == "changing":
+        msg = await call.message.answer("Введите дату отправки в формате - \n<b>ЧАС:МИНУТА ГОД.МЕСЯЦ.ДЕНЬ</b>\n\nлибо" +
+                "\n<b>ЧАС:МИНУТА</b>, если хотите отправить сегодня", reply_markup=AdminPanelKeyboards.back_to_advert_kb(advert_id))
+        await state.update_data(msg=msg, advert_id=advert_id)
+        await AdminStates.advert_sending_date.set()
+    elif action == "cancel":
+        pass
+
+async def advert_changing_sending_date(message: types.Message, advertising_tables: AdvertisingTables,
+        state: FSMContext, bot: Bot, logger: logging.Logger):
+    data = await state.get_data()
+    message_data = message.text.split(' ')
+    try:
+        await bot.delete_message(data['msg'].chat.id, data['msg'].message_id)
+    except:
+        pass
+    text_blocks = message.text.split(' ')
+    block1 = text_blocks[0]
+    try:
+        block2 = text_blocks[1]
+    except IndexError:
+        block2 = datetime.datetime.now(pytz.timezone('Europe/Moscow')).strftime('%Y.%m.%d')
+    final_date_str = block1 + ' ' + block2
+    try:
+        final_date = datetime.datetime.strptime(final_date_str, '%H:%M %Y.%m.%d')
+    except ValueError:
+        text = """
+<b>ОШИБКА. Неверный формат времени, повторите попытку</b>
+
+Введите дату отправки в формате - 
+<b>ЧАС:МИНУТА ГОД.МЕСЯЦ.ДЕНЬ</b>
+
+либо 
+<b>ЧАС:МИНУТА</b>, если хотите отправить сегодня
+"""
+        msg = await message.answer(text, reply_markup=AdminPanelKeyboards.back_to_advert_kb(data['advert_id']))
+        return await state.update_data(msg=msg)
+    #TODO: время записывается на час позже
+    logger.info(final_date)
+    await advertising_tables.update_advertising(data['advert_id'], 'sending_date', final_date)
+    await advertising_tables.update_advertising(data['advert_id'], 'sending_status', False)
+    advert = await advertising_tables.get_advertising('advert_id', data['advert_id'])
+    logger.info(advert['sending_date'])
+    await message.answer('Отправка успешно назначена на <code>' + final_date_str + '</code>')
+    await advert_message_edit_menu(advertising_tables, logger, state, bot, message=message, advert_id=data['advert_id'])
 
 #debug function
 async def check_call(call: types.CallbackQuery, logger: logging.Logger):
@@ -556,3 +627,6 @@ def register_admin(dp: Dispatcher):
     dp.register_callback_query_handler(advert_send, lambda call: call.data.startswith('confirm-advert-sending_'))
     #dp.register_callback_query_handler(check_call)
 
+    dp.register_callback_query_handler(advert_sending_date_actions, lambda call: call.data.startswith('advert-send-date_'))
+
+    dp.register_message_handler(advert_changing_sending_date, state=AdminStates.advert_sending_date)

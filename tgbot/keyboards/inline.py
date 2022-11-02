@@ -40,7 +40,7 @@ class AdminPanelKeyboards:
         kb.add(InlineKeyboardButton(text='Изменить текст', callback_data=f'advertedit_text_{advert_id}'))
         kb.add(InlineKeyboardButton(text='Добавить/изменить медиа', callback_data=f'advertedit_media_{advert_id}'))
         kb.add(InlineKeyboardButton(text='Добавить/изменить кнопки', callback_data=f'advertedit_kbs_{advert_id}'))
-        kb.add(InlineKeyboardButton(text='Изменить дату отправки', callback_data=f'advertedit_data_{advert_id}'))
+        kb.add(InlineKeyboardButton(text='Изменить дату отправки', callback_data=f'advertedit_date_{advert_id}'))
         kb.add(InlineKeyboardButton(text='Отправить сейчас', callback_data=f'advertedit_send_{advert_id}'))
         kb.add(InlineKeyboardButton(text='Удалить объявление', callback_data=f'advertedit_remove_{advert_id}'))
         kb.add(InlineKeyboardButton(text='❌', callback_data=close_callbackdata))
@@ -57,9 +57,20 @@ class AdminPanelKeyboards:
         kb.add(InlineKeyboardButton(text='Всплывающее окно', callback_data='kbtypechoosing-popup_message'))
         kb.add(InlineKeyboardButton(text='Коллбек боту', callback_data='kbtypechoosing-callback_data'))
         return kb
-    
-    #TODO:
-    def return_kb(advert_id):
+
+    def advert_send_date_menu_kb(advert_id):
         kb = InlineKeyboardMarkup()
-        kb.add(InlineKeyboardButton(text='🔙', callback_data=f'goreturn-advert_{advert_id}'))
+        kb.add(InlineKeyboardButton(text='Изменить время', callback_data=f'advert-send-date_changing_{advert_id}'))
+        kb.add(InlineKeyboardButton(text='Отменить отправку', callback_data=f'advert-send-date_cancel_{advert_id}'))
         return kb
+
+    #TODO: handlers
+    def back_to_advert_kb(advert_id):
+        kb = InlineKeyboardMarkup()
+        kb.add(InlineKeyboardButton(text='🔙', callback_data=f'go-back-advert_{advert_id}'))
+        return kb
+
+    def back_to_advert_button(advert_id):
+        b = InlineKeyboardButton(text='🔙', callback_data=f'go-back-advert_{advert_id}')
+        return b
+

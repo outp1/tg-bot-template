@@ -44,7 +44,7 @@ advertising = """
         media_type      TEXT,
         inline_buts     JSON,
         sending_date    TIMESTAMPTZ(0),
-        sending_status  BOOLEAN
+        sending_status  BOOLEAN DEFAULT False
 );
 """
 

@@ -12,8 +12,8 @@ from .pgsqlighter import DatabaseConnection
 
 class UserTables(DatabaseConnection): 
     
-    def __init__(self, db_name: str, auth: dict, tables: list, logger: logging.Logger = logging):
-        super().__init__(db_name, auth, tables)
+    def __init__(self, db_name: str, auth: dict, tables: list, timezone, logger: logging.Logger = logging):
+        super().__init__(db_name, auth, tables, timezone=timezone)
         self.logger = logger
     
     async def new_user(self, user_id: UserId, role='Участник', mention=None, referal_id=None, 

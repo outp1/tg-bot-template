@@ -15,3 +15,5 @@ class AdminStates(StatesGroup):
     advert_text = State()
 
     find_advert = State()
+
+    advert_sending_date = State()

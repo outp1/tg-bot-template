@@ -9,8 +9,8 @@ from .pgsqlighter import DatabaseConnection
 
 class ModeratingHistoryTables(DatabaseConnection):
 
-    def __init__(self, db_name: str, auth: dict, tables: list, logger: logging.Logger = logging):
-        super().__init__(db_name, auth, tables)
+    def __init__(self, db_name: str, auth: dict, tables: list, timezone, logger: logging.Logger = logging):
+        super().__init__(db_name, auth, tables, timezone=timezone)
 
     async def get_all_history(self):
         with self.sqlighter as connection:
@@ -28,8 +28,8 @@ class ModeratingHistoryTables(DatabaseConnection):
 
 class AdvertisingTables(DatabaseConnection):
 
-    def __init__(self, db_name: str, auth: dict, tables: list, logger: logging.Logger = logging):
-        super().__init__(db_name, auth, tables)
+    def __init__(self, db_name: str, auth: dict, tables: list, timezone, logger: logging.Logger = logging):
+        super().__init__(db_name, auth, tables, timezone=timezone)
 
     async def get_all_advertisements(self):
         with self.sqlighter as connection:

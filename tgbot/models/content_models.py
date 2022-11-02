@@ -7,8 +7,8 @@ from .pgsqlighter import DatabaseConnection
 # Messages content database Class
 class ContentTables(DatabaseConnection):
 
-    def __init__(self, db_name: str, auth: dict, tables: list, default_contents: list = None):
-        super().__init__(db_name, auth, tables)
+    def __init__(self, db_name: str, auth: dict, tables: list, timezone, default_contents: list = None):
+        super().__init__(db_name, auth, tables, timezone=timezone)
         self.default_contents = default_contents
         if self.default_contents:
             self.insert_message_default_content()

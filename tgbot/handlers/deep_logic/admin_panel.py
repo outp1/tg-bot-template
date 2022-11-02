@@ -1,5 +1,6 @@
 import datetime
 import logging
+import traceback
 
 import pytz
 from aiogram import Bot, types
@@ -95,7 +96,12 @@ async def take_users_content(user_tables: UserTables, logger: logging.Logger = l
 
 async def take_advert_content(advertising_tables: AdvertisingTables, logger: logging.Logger):
     all_ads = await advertising_tables.get_all_advertisements()
-    all_ads.sort(key=lambda x: x['sending_date'] if x['sending_date'] else x['advert_id'], reverse=False) #TODO: reverse or no? 
+    for ad in all_ads:
+        logger.info(f"{ad['sending_date']} - {type(ad['sending_date'])}")
+    try:
+        all_ads.sort(key=lambda x: x['sending_date'] if x['sending_date'] else x['advert_id'], reverse=False) #TODO: reverse or no? 
+    except TypeError:
+        pass
     all_ads_text = []
     for ad in all_ads[:7]:
         if ad['sending_date'] is None:
@@ -139,7 +145,7 @@ async def ban_user(user: str, user_tables: UserTables, bot: Bot, message: types.
     now = datetime.datetime.now(tz=pytz.timezone('Europe/Moscow'))
     now_str = now.strftime('%Y-%m-%d %H:%M')
     if not num_of.isdigit():
-        return await message.answer('Неверный синтаксис, для справки введите \\adm')
+        return await message.answer('Неверный синтаксис, для справки введите /adm')
     if num_of:
         if unit == 'h':
             block_time = datetime.timedelta(hours=int(num_of)) 
@@ -163,6 +169,7 @@ async def ban_user(user: str, user_tables: UserTables, bot: Bot, message: types.
     except TypeError: # if user_info['unbanned_date'] is None
         status = 'Новая'
         unbanned_date = now + block_time
+    logger.info(unbanned_date)
     unbanned_date_text_format = unbanned_date.strftime('%Y-%m-%d %H:%M')
     user_profile = await bot.get_chat(user)
     bot["banned_users"].append(user)

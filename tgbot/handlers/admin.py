@@ -578,8 +578,6 @@ async def advert_changing_sending_date(message: types.Message, advertising_table
 """
         msg = await message.answer(text, reply_markup=AdminPanelKeyboards.back_to_advert_kb(data['advert_id']))
         return await state.update_data(msg=msg)
-    #TODO: время записывается на час позже
-    logger.info(final_date)
     await advertising_tables.update_advertising(data['advert_id'], 'sending_date', final_date)
     await advertising_tables.update_advertising(data['advert_id'], 'sending_status', False)
     advert = await advertising_tables.get_advertising('advert_id', data['advert_id'])

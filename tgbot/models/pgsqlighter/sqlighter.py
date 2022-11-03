@@ -1,7 +1,7 @@
-import psycopg2
 import datetime
+
+import psycopg2
 import pytz
-from tgbot.config import Config
 
 class Sqlighter:
 
@@ -33,7 +33,7 @@ class DatabaseConnection(Sqlighter):
         self.timezone = timezone
         if self.tables:
             self.create_tables()
-            self.set_timezone()
+        self.set_timezone()
             
     def create_tables(self):
         with self.sqlighter as connection:

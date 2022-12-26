@@ -5,6 +5,7 @@ from aiogram import types
 from aiogram.dispatcher.handler import CancelHandler
 from aiogram.dispatcher.middlewares import BaseMiddleware
 
+
 class AlbumMiddleware(BaseMiddleware):
     """This middleware is for capturing media groups."""
 
@@ -32,9 +33,9 @@ class AlbumMiddleware(BaseMiddleware):
             message.conf["is_last"] = True
             data["album"] = self.album_data[message.media_group_id]
 
-    async def on_post_process_message(self, message: types.Message, result: dict, data: dict):
+    async def on_post_process_message(
+        self, message: types.Message, result: dict, data: dict
+    ):
         """Clean up after handling our album."""
         if message.media_group_id and message.conf.get("is_last"):
             del self.album_data[message.media_group_id]
-
-

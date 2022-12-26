@@ -1,5 +1,4 @@
-
-reg_date_index = 'reg_date'
+reg_date_index = "reg_date"
 
 users = f"""
     CREATE TABLE IF NOT EXISTS users (

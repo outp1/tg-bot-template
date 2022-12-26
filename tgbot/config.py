@@ -57,30 +57,30 @@ def load_config(path: str = None):
             admin_ids=list(map(int, env.list("ADMINS"))),
             admin_panel_buttons=data.admin_panel_buttons,
             use_redis=env.bool("USE_REDIS"),
-            message_contents=data.content
+            message_contents=data.content,
         ),
         db=DbConfig(
-            host=env.str('DB_HOST'),
-            password=env.str('DB_PASS'),
-            user=env.str('DB_USER'),
-            database=env.str('DB_NAME'),
+            host=env.str("DB_HOST"),
+            password=env.str("DB_PASS"),
+            user=env.str("DB_USER"),
+            database=env.str("DB_NAME"),
             tables=data.db_tables,
             # for pgsqlighter auth argument
-            auth={ 
-                'user': env.str('DB_USER'),
-                'host': env.str('DB_HOST'),
-                'password': env.str('DB_PASS'),
-                'port': env.str('DB_PORT')
-                }
+            auth={
+                "user": env.str("DB_USER"),
+                "host": env.str("DB_HOST"),
+                "password": env.str("DB_PASS"),
+                "port": env.str("DB_PORT"),
+            },
         ),
         program=Program(
-            logs_folder=env.str('LOGS_FOLDER'),
-            logs_token=env.str('LOGS_TOKEN'),
-            logs_telegram_id=env.str('LOGS_TELEGRAM_ID'),
-            timezone=env.str('TZ')
+            logs_folder=env.str("LOGS_FOLDER"),
+            logs_token=env.str("LOGS_TOKEN"),
+            logs_telegram_id=env.str("LOGS_TELEGRAM_ID"),
+            timezone=env.str("TZ"),
         ),
         misc=Miscellaneous(
-            inclose_text=env.str('INCLOSE_TEXT'),
-            support_mention=env.str('SUPPORT_MENTION')
-            )
+            inclose_text=env.str("INCLOSE_TEXT"),
+            support_mention=env.str("SUPPORT_MENTION"),
+        ),
     )

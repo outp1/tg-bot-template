@@ -14,10 +14,13 @@ from tgbot.filters.chatfilters import PrivateFilter
 from tgbot.handlers.admin import register_admin
 from tgbot.handlers.user import register_user
 from tgbot.handlers.misc import register_misc
-from tgbot.middlewares import (ObjectsMiddleware, AlbumMiddleware, 
-        BannedMiddleware)
-from tgbot.models import (UserTables, ContentTables, 
-        ModeratingHistoryTables, AdvertisingTables)
+from tgbot.middlewares import ObjectsMiddleware, AlbumMiddleware, BannedMiddleware
+from tgbot.models import (
+    UserTables,
+    ContentTables,
+    ModeratingHistoryTables,
+    AdvertisingTables,
+)
 from tgbot.misc import botlogging, abc_classes
 from tgbot.services.banned_users_service import banned_users_service
 from tgbot.services.ad_sending_service import AdSendingService
@@ -39,54 +42,85 @@ def register_all_handlers(dp):
     register_user(dp)
     register_misc(dp)
 
+
 async def take_all_banned_users(user_tables: UserTables):
 
     users = await user_tables.take_all_users()
     banned_users = []
     for user in users:
-        if user['unbanned_date'] is not None:
-            if user['unbanned_date'] > datetime.now(pytz.timezone('Europe/Moscow')):
-                banned_users.append(user['user_id'])
+        if user["unbanned_date"] is not None:
+            if user["unbanned_date"] > datetime.now(pytz.timezone("Europe/Moscow")):
+                banned_users.append(user["user_id"])
     return banned_users
+
 
 async def main():
 
     config = load_config(".env")
 
-    logger = botlogging.BotLogging('Main', config.program.logs_folder, config.program.logs_token, 
-            config.program.logs_telegram_id, tg_handler_dir='tgbot/misc/botlogging/telegram_errors_handler')
+    logger = botlogging.BotLogging(
+        "Main",
+        config.program.logs_folder,
+        config.program.logs_token,
+        config.program.logs_telegram_id,
+        tg_handler_dir="tgbot/misc/botlogging/telegram_errors_handler",
+    )
     logger = logger.get_logger()
 
     logger.info("Starting bot")
 
     storage = RedisStorage2() if config.tg_bot.use_redis else MemoryStorage()
-    bot = Bot(token=config.tg_bot.token, parse_mode='HTML')
+    bot = Bot(token=config.tg_bot.token, parse_mode="HTML")
     dp = Dispatcher(bot, storage=storage)
 
-    bot['config'] = config
+    bot["config"] = config
 
     # Db connection objects
-    bot['user_tables'] = UserTables(config.db.database, config.db.auth, config.db.tables, timezone=config.program.timezone)
-    bot['content_tables'] = ContentTables(config.db.database, config.db.auth, 
-            config.db.tables, default_contents=config.tg_bot.message_contents, timezone=config.program.timezone)
-    bot['modhistory_tables'] = ModeratingHistoryTables(config.db.database, config.db.auth, config.db.tables, 
-            timezone=config.program.timezone, logger=logger)
-    bot['advertising_tables'] = AdvertisingTables(config.db.database, config.db.auth, config.db.tables, 
-            timezone=config.program.timezone, logger=logger)
+    bot["user_tables"] = UserTables(
+        config.db.database,
+        config.db.auth,
+        config.db.tables,
+        timezone=config.program.timezone,
+    )
+    bot["content_tables"] = ContentTables(
+        config.db.database,
+        config.db.auth,
+        config.db.tables,
+        default_contents=config.tg_bot.message_contents,
+        timezone=config.program.timezone,
+    )
+    bot["modhistory_tables"] = ModeratingHistoryTables(
+        config.db.database,
+        config.db.auth,
+        config.db.tables,
+        timezone=config.program.timezone,
+        logger=logger,
+    )
+    bot["advertising_tables"] = AdvertisingTables(
+        config.db.database,
+        config.db.auth,
+        config.db.tables,
+        timezone=config.program.timezone,
+        logger=logger,
+    )
 
-    bot['logger'] = logger
+    bot["logger"] = logger
 
-    bot['banned_users'] = await take_all_banned_users(bot['user_tables'])
+    bot["banned_users"] = await take_all_banned_users(bot["user_tables"])
 
     register_all_middlewares(dp)
     register_all_filters(dp)
     register_all_handlers(dp)
 
     # Banned users service initialization
-    asyncio.create_task(banned_users_service(bot['banned_users'], bot['user_tables'], logger))
+    asyncio.create_task(
+        banned_users_service(bot["banned_users"], bot["user_tables"], logger)
+    )
 
     # Ad sending service initialization
-    AdService = AdSendingService(bot['advertising_tables'], bot['user_tables'], bot, logger)
+    AdService = AdSendingService(
+        bot["advertising_tables"], bot["user_tables"], bot, logger
+    )
     asyncio.create_task(AdService.start(10))
 
     # start
@@ -98,7 +132,7 @@ async def main():
         await bot.session.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):

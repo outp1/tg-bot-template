@@ -4,7 +4,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 class AdminStates(StatesGroup):
     find_user = State()
 
-    newad_header = State() 
+    newad_header = State()
     newad_text = State()
 
     advert_media = State()

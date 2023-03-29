@@ -24,11 +24,14 @@ class TgBot:
     admin_panel_buttons: list[InlineKeyboardButton]
     use_redis: bool
     message_contents: list
+    bot_name: str
 
 
 @dataclass
 class Program:
     logs_folder: str
+    logs_file: str
+    logs_console_level: str
     logs_token: str
     logs_telegram_id: str
     timezone: str
@@ -59,6 +62,7 @@ def load_config(path: Optional[str] = None):
             admin_panel_buttons=data.admin_panel_buttons,
             use_redis=env.bool("USE_REDIS"),
             message_contents=data.content,
+            bot_name=env.str("BOT_NAME")
         ),
         db=DbConfig(
             host=env.str("POSTGRES_HOST"),
@@ -70,6 +74,8 @@ def load_config(path: Optional[str] = None):
         ),
         program=Program(
             logs_folder=env.str("LOGS_FOLDER"),
+            logs_file=env.str("LOGS_FILE"),
+            logs_console_level=env.str("LOGS_CONSOLE_LEVEL"),
             logs_token=env.str("LOGS_TOKEN"),
             logs_telegram_id=env.str("LOGS_TELEGRAM_ID"),
             timezone=env.str("TZ"),

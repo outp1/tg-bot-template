@@ -46,23 +46,26 @@ def init_db(bot: Bot):
     bot["db_repository"] = init_repository(session)
 
 
-def register_controllers(bot: Bot):
+def register_all_controllers(bot: Bot):
     logger.debug("Registering controllers.")
     bot["menu_controller"] = MenuController(bot["session"], bot["db_repository"])
 
 
 def register_all_middlewares(dp):
+    logger.debug("Registering middlewares.")
     dp.setup_middleware(ObjectsMiddleware())
     dp.setup_middleware(AlbumMiddleware())
     # dp.setup_middleware(BannedMiddleware())
 
 
 def register_all_filters(dp):
+    logger.debug("Registering filters.")
     dp.filters_factory.bind(AdminFilter)
     dp.filters_factory.bind(PrivateFilter)
 
 
 def register_all_handlers(dp):
+    logger.debug("Registering handlers.")
     register_menu(dp)
     register_misc(dp)
     # register_admin(dp)
@@ -78,7 +81,7 @@ async def take_all_banned_users(users_repo: UsersRepository):
     return banned_users
 
 
-async def main():
+async def setup_tgbot():
 
     logger.info("Starting bot")
 
@@ -90,7 +93,7 @@ async def main():
 
     init_db(bot)
 
-    register_controllers(bot)
+    register_all_controllers(bot)
     register_all_middlewares(dp)
     register_all_filters(dp)
     register_all_handlers(dp)
@@ -98,31 +101,27 @@ async def main():
     # bot["banned_users"] = await take_all_banned_users(bot["user_tables"])
 
     # Banned users service initialization
-    #asyncio.create_task(
+    # asyncio.create_task(
     #    banned_users_service(bot["banned_users"], bot["user_tables"], logger)
-    #)
+    # )
 
     # Ad sending service initialization
-    #AdService = AdSendingService(
+    # AdService = AdSendingService(
     #    bot["advertising_tables"], bot["user_tables"], bot, logger
-    #)
-    #asyncio.create_task(AdService.start(10))
+    # )
+    # asyncio.create_task(AdService.start(10))
 
-    # start
+    logger.debug("Telegram bot setup was completed successfully.")
+
     try:
         await dp.start_polling()
     finally:
         await dp.storage.close()
         await dp.storage.wait_closed()
+
         session = await bot.get_session()
-        await session.close()
+        if session:
+            await session.close()
+
         dp.stop_polling()
         await dp.wait_closed()
-
-
-
-if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except (KeyboardInterrupt, SystemExit):
-        logging.error("Bot stopped!")

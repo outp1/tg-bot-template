@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 from environs import Env
 from aiogram.types import InlineKeyboardButton
@@ -11,9 +12,9 @@ class DbConfig:
     host: str
     password: str
     user: str
+    port: int
     database: str
     tables: list
-    auth: dict
 
 
 @dataclass
@@ -47,7 +48,7 @@ class Config:
     program: Program
 
 
-def load_config(path: str = None):
+def load_config(path: Optional[str] = None):
     env = Env()
     env.read_env(path)
 
@@ -60,18 +61,12 @@ def load_config(path: str = None):
             message_contents=data.content,
         ),
         db=DbConfig(
-            host=env.str("DB_HOST"),
-            password=env.str("DB_PASS"),
-            user=env.str("DB_USER"),
-            database=env.str("DB_NAME"),
+            host=env.str("POSTGRES_HOST"),
+            password=env.str("POSTGRES_PASSWORD"),
+            user=env.str("POSTGRES_USER"),
+            port=env.str("POSTGRES_PORT"),
+            database=env.str("POSTGRES_DB"),
             tables=data.db_tables,
-            # for pgsqlighter auth argument
-            auth={
-                "user": env.str("DB_USER"),
-                "host": env.str("DB_HOST"),
-                "password": env.str("DB_PASS"),
-                "port": env.str("DB_PORT"),
-            },
         ),
         program=Program(
             logs_folder=env.str("LOGS_FOLDER"),
@@ -84,3 +79,7 @@ def load_config(path: str = None):
             support_mention=env.str("SUPPORT_MENTION"),
         ),
     )
+
+
+config: Config
+config = load_config()

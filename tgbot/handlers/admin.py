@@ -9,17 +9,10 @@ from aiogram.dispatcher.storage import FSMContext
 from aiogram.utils.exceptions import BadRequest
 import pytz
 
-from tgbot.models import (
-    UserTables,
-    ContentTables,
-    ModeratingHistoryTables,
-    AdvertisingTables,
-)
 from tgbot import keyboards
 from tgbot.keyboards import AdminPanelKeyboards
 from tgbot.misc.states import AdminStates
 from tgbot.misc.tools import safe_list_get, generate_id_async
-from .deep_logic import admin_panel
 
 # TODO: CODE REFACTORING. EMERGENCY.
 

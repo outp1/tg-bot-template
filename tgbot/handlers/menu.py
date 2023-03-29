@@ -1,13 +1,17 @@
-from aiogram import Dispatcher, Bot, types
+from aiogram import Dispatcher
+from aiogram.types import Message
 
-from tgbot.models import UserTables
-
-
-# TODO: example of a prepared message from message_contents
-async def user_start(message: types.Message, bot, user_tables: UserTables):
-    await user_tables.new_user(message.from_user.id, message.from_user.mention)
-    await message.reply("Hello, user!")
+from tgbot.controllers import MenuController
+from tgbot.models.users import User
 
 
-def register_user(dp: Dispatcher):
+async def user_start(message: Message, menu_controller: MenuController):
+    await menu_controller.register_user(
+        User(id=message.from_user.id, username=message.from_user.mention)
+    )
+    text, keyboard = await menu_controller.get_start_data()
+    await message.answer(text, reply_markup=keyboard)
+
+
+def register_menu(dp: Dispatcher):
     dp.register_message_handler(user_start, commands=["start"], state="*")

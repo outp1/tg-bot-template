@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Optional
 
 from sqlalchemy.orm import Session
 
@@ -12,6 +14,9 @@ UserID = int
 class User:
     id: UserID
     username: str
+    created_at: datetime = datetime.now()
+    ban_date: Optional[datetime] = None
+    unbanned_date: Optional[datetime] = None
 
 
 class UsersRepository(Repository):

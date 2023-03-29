@@ -12,7 +12,7 @@ from tgbot.models import UserTables
 # TODO
 async def take_stats_content(
     user_tables: UserTables,
-    logger: logging.Logger = logging,
+    logger: logging.Logger = logging.getLogger(),
     bot_name: str = "Без имени",
 ):
     today = datetime.datetime.now(pytz.timezone("Europe/Moscow")).strftime("%d.%m.%Y")

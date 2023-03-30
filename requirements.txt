@@ -6,3 +6,6 @@ pytz
 requests
 sqlalchemy
 sqlalchemy-utils
+pyrogram
+pytest
+pytest-asyncio

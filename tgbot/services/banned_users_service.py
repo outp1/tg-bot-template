@@ -1,24 +1,27 @@
 import logging
 import asyncio
-from logging import Logger
 from datetime import datetime
+from typing import List
 
 import pytz
+from sqlalchemy.orm import Session
 
-from tgbot.misc.abc_classes import UsersList
-from tgbot.models import UserTables
+from tgbot.models.users import User, UsersRepository
+from config import config
 
 
-async def banned_users_service(
-    banned_users: UsersList, user_tables: UserTables, logger: Logger = logging
-):
+logger = logging.getLogger("telegram_bot.BannedUsersService")
+
+
+async def banned_users_service(banned_users: List[User], db_session: Session):
+    users_repo = UsersRepository(db_session)
     while True:
-        users = await user_tables.take_all_users()
+        users = users_repo.list()
         for user in users:
-            if user["unbanned_date"] is not None:
+            if user.unbanned_date is not None:
                 if (
                     user["unbanned_date"]
-                    <= datetime.now(pytz.timezone("Europe/Moscow"))
+                    <= datetime.now(pytz.timezone(config.program.timezone))
                     and user["user_id"] in banned_users
                 ):
                     while True:
@@ -27,4 +30,4 @@ async def banned_users_service(
                         except ValueError:
                             break
                     logger.debug(f'User - {user["user_id"]} - removed from banned list')
-        await asyncio.sleep(30)
+        await asyncio.sleep(10)

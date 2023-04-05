@@ -21,7 +21,6 @@ class DbConfig:
 class TgBot:
     token: str
     admin_ids: list[int]
-    admin_panel_buttons: list[InlineKeyboardButton]
     use_redis: bool
     message_contents: list
     bot_name: str
@@ -65,7 +64,6 @@ def load_config(path: Optional[str] = None):
         tg_bot=TgBot(
             token=env.str("BOT_TOKEN"),
             admin_ids=list(map(int, env.list("ADMINS"))),
-            admin_panel_buttons=data.admin_panel_buttons,
             use_redis=env.bool("USE_REDIS"),
             message_contents=data.content,
             bot_name=env.str("BOT_NAME"),

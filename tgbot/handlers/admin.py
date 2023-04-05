@@ -4,115 +4,114 @@ import json
 import traceback
 import datetime
 
-from aiogram import Dispatcher, Bot, types
+from aiogram import Dispatcher, Bot
+from aiogram.types import Message, CallbackQuery, ContentTypes, InlineKeyboardMarkup
 from aiogram.dispatcher.storage import FSMContext
-from aiogram.utils.exceptions import BadRequest
+from aiogram.utils.exceptions import BadRequest, MessageToDeleteNotFound
+from pyrogram.raw.core import message
 import pytz
 
-from tgbot import keyboards
+from tgbot.keyboards import get_inclose_kb
+from tgbot.controllers.admin import AdminController
 from tgbot.keyboards import AdminPanelKeyboards
-from tgbot.misc.states import AdminStates
-from tgbot.misc.tools import safe_list_get, generate_id_async
+from tgbot.misc.states import AdminStates, find_user_state
+from utils.func_tools import safe_list_get, generate_id_async
+from config import config
 
-# TODO: CODE REFACTORING. EMERGENCY.
 
-
-async def admin_panel_start(
-    message: types.Message, logger, bot: Bot, state: FSMContext
-):
-    try:
-        await state.finish()
-    except:
-        pass
-    kbs = AdminPanelKeyboards.get_admin_panel_keyboard(
-        bot["config"].tg_bot.admin_panel_buttons
-    )
-    kbs.add(keyboards.inclose_button(text=bot["config"].misc.inclose_text))
-    await message.answer("Hello, admin!", reply_markup=kbs)
+async def admin_panel_start(message: Message, admin_controller: AdminController):
+    text, kb = await admin_controller.start()
+    await message.answer(text, reply_markup=kb)
 
 
 # Admin panel start buttons
 async def admin_panel_actions(
-    call: types.CallbackQuery,
-    state: FSMContext,
-    bot: Bot,
-    logger: logging.Logger,
-    user_tables: UserTables,
-    advertising_tables: AdvertisingTables,
+    update: Union[Message, CallbackQuery],
+    admin_controller: AdminController,
 ):
-    try:
-        await state.finish()
-    except:
-        pass
-    action = call.data.split("_")[1]
+    if type(update) is CallbackQuery:
+        action = update.data.split("_")[1]
+    elif type(update) is Message:
+        action = update.text.split("_")[1]
+    else:
+        raise NotImplementedError
     if action == "stats":
-        content = await admin_panel.take_stats_content(user_tables, logger)
-        kbs = AdminPanelKeyboards.get_stats_panel_keyboard()
-        kbs.add(keyboards.inclose_button(text=bot["config"].misc.inclose_text))
-        await call.message.answer(content, reply_markup=kbs)
+        text, kb = await admin_controller.stats_panel()
     elif action == "users":
-        content = await admin_panel.take_users_content(user_tables, logger)
-        kbs = AdminPanelKeyboards.get_users_panel_keyboard()
-        kbs.add(keyboards.inclose_button(text=bot["config"].misc.inclose_text))
-        await call.message.answer(content, reply_markup=kbs)
+        text, kb = await admin_controller.users_panel()
     elif action == "advertisements":
-        content = await admin_panel.take_advert_content(advertising_tables, logger)
-        kbs = AdminPanelKeyboards.get_advert_panel_keyboard()
-        kbs.add(keyboards.inclose_button(text=bot["config"].misc.inclose_text))
-        await call.message.answer(content, reply_markup=kbs)
+        text, kb = await admin_controller.adverts_panel()
+    else:
+        text = "Ошибка. Администраторская команда не найдена."
+        kb = InlineKeyboardMarkup()
+    if type(update) is CallbackQuery:
+        await update.message.answer(text, reply_markup=kb)
+    elif type(update) is Message:
+        await update.answer(text, reply_markup=kb)
 
 
-# All admin panel actions buttons
+# Simple admin actions
 async def admin_actions(
-    call: types.CallbackQuery,
+    update: Union[Message, CallbackQuery],
+    admin_controller: AdminController,
     state: FSMContext,
     bot: Bot,
-    logger: logging.Logger,
-    user_tables: UserTables,
 ):
-    data = call.data.split("_")
-    action = data[1]
-    if action == "find-user":
-        kb = keyboards.inclose(bot["config"].misc.inclose_text)
-        msg = await call.message.answer(
-            "<b>Введите циферный айди или никнейм юзера через @:</b>", reply_markup=kb
-        )
-        await state.update_data(msg=msg)
-        await AdminStates.find_user.set()
-    elif action == "export-stat":
-        pass
+    if isinstance(update, CallbackQuery):
+        data = update.data.split("_")
+        action = data[1]
+        chat_id = update.message.chat.id
+    elif isinstance(update, Message):
+        data = update.text.split(" ")
+        action = data[0].replace("/", "")
+        chat_id = update.chat.id
+    else:
+        return
+
+    if action == "finduser":
+        kb = get_inclose_kb(config.misc.inclose_text)
+        if len(data) == 1:
+            msg = await bot.send_message(
+                chat_id,
+                "<b>Enter the ID or username of the user to find:</b>",
+                reply_markup=kb,
+            )
+            await state.update_data(msg=msg)
+            await find_user_state.set()
+            return
+        else:
+            text, kb = await admin_controller.find_user(" ".join(data[1:]))
+    else:
+        return
+
+    if isinstance(update, Message):
+        await update.answer(text, reply_markup=kb)
+    if isinstance(update, CallbackQuery):
+        await update.message.answer(text, reply_markup=kb)
 
 
-# find-user action
-async def find_user_state(
-    message: types.Message,
+# Find user action
+async def find_user_action(
+    message: Message,
+    admin_controller: AdminController,
     state: FSMContext,
     bot: Bot,
-    logger: logging.Logger,
-    user_tables: UserTables,
 ):
     data = await state.get_data()
     try:
-        await bot.delete_message(message.from_user.id, data["message"].message_id)
-    except:
+        await bot.delete_message(message.from_user.id, data["msg"].message_id)
+        await message.delete()
+    except MessageToDeleteNotFound:
         pass
-    content = await admin_panel.take_find_user_content(
-        message, user_tables, state, bot, logger
-    )
-    if not content:
-        return await message.answer(
-            "<b>Данные введены неверно. Попробуйте ещё раз:</b>",
-            reply_markup=keyboards.inclose(bot["config"].misc.inclose_text),
-        )
-    else:
-        kb = AdminPanelKeyboards.get_user_moderate_keyboard(message.text)
-        kb.add(keyboards.inclose_button(bot["config"].misc.inclose_text))
-        await message.answer(content, reply_markup=kb)
+    text, kb = await admin_controller.find_user(message.text)
+    await message.answer(text, reply_markup=kb)
 
 
 # users managing actions
 async def admin_user_actions(
-    call: types.CallbackQuery, bot: Bot, logger: logging.Logger, user_tables: UserTables
+    call: CallbackQuery,
+    bot: Bot,
+    logger: logging.Logger,
 ):
     data = call.data.split("_")
     action, user = data[1], data[2]
@@ -122,28 +121,27 @@ async def admin_user_actions(
             + f"<b>Временный бан -</b> <code>!ban {user} количество время</code> (примеры времени: 5 d, 12 h, 5 m)\n\n"
             + f"<b>Перманентный бан -</b> <code>!ban {user}</code>\n\n"
             + f"<b>Снять любую блокировку</b> - <code>!unban {user}</code>\n\n",
-            reply_markup=keyboards.inclose(bot["config"].misc.inclose_text),
+            reply_markup=keyboards.get_inclose_kb(bot["config"].misc.inclose_text),
         )
     elif action == "edit":
         await call.message.answer(
             f"<i>Введите:</i>\n\n"
             + f"<b>Редактирование пользователя -</b> <code>!edit_user {user} название_ячейки_данных новое_значение</code>\n\n"
             + f"<b>Пример - </b> <code>!edit_user {user} reg_date 2022.08.30</code>\n\n",
-            reply_markup=keyboards.inclose(bot["config"].misc.inclose_text),
+            reply_markup=keyboards.get_inclose_kb(bot["config"].misc.inclose_text),
         )
     elif action == "send-message":
         await call.message.answer(
             f"<i>Введите:</i>\n\n"
             + f"<b>Отправка сообщения -</b> <code>!adm_send_message {user} сообщение</code>\n\n"
             + f"<b>Пример - </b> <code>!adm_send_message {user} Привет, смертный</code>\n\n",
-            reply_markup=keyboards.inclose(bot["config"].misc.inclose_text),
+            reply_markup=keyboards.get_inclose_kb(bot["config"].misc.inclose_text),
         )
 
 
 # advertising functions
 async def admin_advertpanel(
-    call: types.CallbackQuery,
-    advertising_tables: AdvertisingTables,
+    call: CallbackQuery,
     logger: logging.Logger,
     bot: Bot,
     state: FSMContext,
@@ -157,7 +155,7 @@ async def admin_advertpanel(
         kb.add(keyboards.inclose_button(text=bot["config"].misc.inclose_text))
         await call.message.answer(text, reply_markup=kb)
     elif action == "edit":
-        kb = keyboards.inclose(bot["config"].misc.inclose_text)
+        kb = keyboards.get_inclose_kb(bot["config"].misc.inclose_text)
         msg = await call.message.answer(
             "Введите айди объявления для редактирования: ", reply_markup=kb
         )
@@ -219,10 +217,9 @@ async def send_advert_to_user(advert, user_id, bot: Bot):
 async def send_advert_preview(
     advert,
     reply_markup,
-    advertising_tables: AdvertisingTables,
     bot: Bot,
-    message: types.Message = None,
-    call: types.CallbackQuery = None,
+    message: Message = None,
+    call: CallbackQuery = None,
     logger: logging.Logger = logging,
 ):
     if advert["sending_date"] is None:
@@ -264,12 +261,11 @@ ID рекламы: <code>{advert['advert_id']}</code>
 
 
 async def advert_message_edit_menu(
-    advertising_tables: AdvertisingTables,
     logger: logging.Logger,
     state: FSMContext,
     bot: Bot,
-    message: types.Message = None,
-    call: types.CallbackQuery = None,
+    message: Message = None,
+    call: CallbackQuery = None,
     advert_id=None,
 ):
     data = await state.get_data()
@@ -306,8 +302,7 @@ async def advert_message_edit_menu(
 
 
 async def advert_edit_actions(
-    call: types.CallbackQuery,
-    advertising_tables: AdvertisingTables,
+    call: CallbackQuery,
     logger: logging.Logger,
     state: FSMContext,
     bot: Bot,
@@ -430,8 +425,7 @@ ID рекламы: <code>{advert_id}</code>
 
 
 async def advert_button_add(
-    call: types.CallbackQuery,
-    advertising_tables: AdvertisingTables,
+    call: CallbackQuery,
     bot: Bot,
     logger: logging.Logger,
     state: FSMContext,
@@ -452,7 +446,7 @@ async def advert_button_add(
 
 
 # TODO:
-async def advert_kbtext(message: types.Message, state: FSMContext, bot: Bot):
+async def advert_kbtext(message: Message, state: FSMContext, bot: Bot):
     data = await state.get_data()
     try:
         await bot.delete_message(message.chat.id, message.message_id)
@@ -467,7 +461,7 @@ async def advert_kbtext(message: types.Message, state: FSMContext, bot: Bot):
     await AdminStates.advert_kbtype.set()
 
 
-async def advert_kbtype(call: types.CallbackQuery, state: FSMContext, bot: Bot):
+async def advert_kbtype(call: CallbackQuery, state: FSMContext, bot: Bot):
     data = await state.get_data()
     _type = call.data.split("-")[1]
     try:
@@ -482,9 +476,8 @@ async def advert_kbtype(call: types.CallbackQuery, state: FSMContext, bot: Bot):
 
 
 async def advert_kbcontent(
-    message: types.Message,
+    message: Message,
     state: FSMContext,
-    advertising_tables: AdvertisingTables,
     bot: Bot,
     logger: logging.Logger,
 ):
@@ -531,8 +524,7 @@ async def advert_kbcontent(
 
 # ? Move to other module ?
 async def popup_message_handler(
-    call: types.CallbackQuery,
-    advertising_tables: AdvertisingTables,
+    call: CallbackQuery,
     logger: logging.Logger,
 ):
     data = call.data.split("_")
@@ -541,8 +533,7 @@ async def popup_message_handler(
 
 
 async def advert_remove(
-    call: types.CallbackQuery,
-    advertising_tables: AdvertisingTables,
+    call: CallbackQuery,
     logger: logging.Logger,
     bot: Bot,
 ):
@@ -558,8 +549,7 @@ async def advert_remove(
 
 async def find_advert_content(
     advert_id: str,
-    message: types.Message,
-    advertising_tables: AdvertisingTables,
+    message: Message,
     state: FSMContext,
     logger: logging.Logger,
     bot: Bot,
@@ -576,13 +566,13 @@ async def find_advert_content(
                 message=message,
             )
         else:
-            kb = keyboards.inclose(bot["config"].misc.inclose_text)
+            kb = keyboards.get_inclose_kb(bot["config"].misc.inclose_text)
             msg = await message.answer(
                 "Объявление не найдено. Повторите ввод:", reply_markup=kb
             )
             return await state.update_data(msg=msg)
     else:
-        kb = keyboards.inclose(bot["config"].misc.inclose_text)
+        kb = keyboards.get_inclose_kb(bot["config"].misc.inclose_text)
         msg = await message.answer(
             "Айди состоит из чисел. Повторите ввод:", reply_markup=kb
         )
@@ -590,8 +580,7 @@ async def find_advert_content(
 
 
 async def find_advert_state(
-    message: types.Message,
-    advertising_tables: AdvertisingTables,
+    message: Message,
     state: FSMContext,
     logger: logging.Logger,
     bot: Bot,
@@ -610,9 +599,8 @@ async def find_advert_state(
 
 
 async def advert_text(
-    message: types.Message,
+    message: Message,
     state: FSMContext,
-    advertising_tables: AdvertisingTables,
     logger: logging.Logger,
     bot: Bot,
 ):
@@ -635,16 +623,15 @@ async def advert_text(
 
 # TODO deleting_messages
 async def advert_media(
-    message: types.Message,
+    message: Message,
     state: FSMContext,
-    advertising_tables: AdvertisingTables,
     logger: logging.Logger,
     bot: Bot,
     album: list = None,
 ):
     data = await state.get_data()
     if album:
-        media_group = types.MediaGroup()
+        media_group = MediaGroup()
         for obj in album:
             if obj.photo:
                 file_id = obj.photo[-1].file_id
@@ -655,7 +642,9 @@ async def advert_media(
             except ValueError:
                 return await message.answer(
                     "Данный тип альбома не поддерживается. Отправьте другое:",
-                    reply_markup=keyboards.inclose(bot["config"].misc.inclose_text),
+                    reply_markup=keyboards.get_inclose_kb(
+                        bot["config"].misc.inclose_text
+                    ),
                 )
         await advertising_tables.update_advertising(
             data["advert_id"], "media_type", "media_group"
@@ -681,7 +670,7 @@ async def advert_media(
         else:
             return await message.answer(
                 "Ошибка. Отправьте медиа:",
-                reply_markup=keyboards.inclose(bot["config"].misc.inclose_text),
+                reply_markup=keyboards.get_inclose_kb(bot["config"].misc.inclose_text),
             )
     advert = await advertising_tables.get_advertising("advert_id", data["advert_id"])
     await advert_message_edit_menu(
@@ -700,8 +689,7 @@ async def advert_media(
 
 
 async def newad_header(
-    message: types.Message,
-    advertising_tables: AdvertisingTables,
+    message: Message,
     logger: logging.Logger,
     state: FSMContext,
 ):
@@ -716,8 +704,7 @@ async def newad_header(
 
 
 async def newad_text(
-    message: types.Message,
-    advertising_tables: AdvertisingTables,
+    message: Message,
     logger: logging.Logger,
     state: FSMContext,
     bot: Bot,
@@ -735,9 +722,7 @@ async def newad_text(
 
 
 async def advert_send(
-    call: types.CallbackQuery,
-    advertising_tables: AdvertisingTables,
-    user_tables: UserTables,
+    call: CallbackQuery,
     logger: logging.Logger,
     bot: Bot,
 ):
@@ -758,13 +743,10 @@ async def advert_send(
 
 # All admin commands starting with '!'
 async def admin_commands(
-    message: types.Message,
+    message: Message,
     bot: Bot,
     logger: logging.Logger,
-    user_tables: UserTables,
-    modhistory_tables: ModeratingHistoryTables,
     state: FSMContext,
-    advertising_tables: AdvertisingTables,
 ):
     try:
         await state.finish()
@@ -832,7 +814,7 @@ async def admin_commands(
         await AdminStates.newad_header.set()
     elif action == "!advert":
         if len(data) < 2:
-            kb = keyboards.inclose(bot["config"].misc.inclose_text)
+            kb = keyboards.get_inclose_kb(bot["config"].misc.inclose_text)
             msg = await message.answer(
                 "Введите айди объявления для редактирования: ", reply_markup=kb
             )
@@ -847,7 +829,7 @@ async def admin_commands(
 
 
 async def advert_sending_date_actions(
-    call: types.CallbackQuery, state: FSMContext, logger: logging.Logger
+    call: CallbackQuery, state: FSMContext, logger: logging.Logger
 ):
     data = call.data.split("_")
     action, advert_id = data[1], data[2]
@@ -864,8 +846,7 @@ async def advert_sending_date_actions(
 
 
 async def advert_changing_sending_date(
-    message: types.Message,
-    advertising_tables: AdvertisingTables,
+    message: Message,
     state: FSMContext,
     bot: Bot,
     logger: logging.Logger,
@@ -925,7 +906,7 @@ async def advert_changing_sending_date(
 
 
 # debug function
-async def check_call(call: types.CallbackQuery, logger: logging.Logger):
+async def check_call(call: CallbackQuery, logger: logging.Logger):
     logger.info(call.to_python())
 
 
@@ -933,20 +914,34 @@ def register_admin(dp: Dispatcher):
     dp.register_message_handler(
         admin_panel_start, commands=["adm"], state="*", is_admin=True
     )
+
     dp.register_callback_query_handler(
         admin_panel_actions,
         lambda call: call.data.startswith("adm-panel_"),
         state="*",
         is_admin=True,
     )
-    dp.register_callback_query_handler(
-        admin_actions,
-        lambda call: call.data.startswith("adm-action_"),
+    dp.register_message_handler(
+        admin_panel_actions,
+        lambda message: message.text.startswith("/adm_"),
         state="*",
         is_admin=True,
     )
 
-    dp.register_message_handler(find_user_state, state=AdminStates.find_user)
+    dp.register_callback_query_handler(
+        admin_actions,
+        lambda call: call.data.startswith("admaction_"),
+        state="*",
+        is_admin=True,
+    )
+    dp.register_message_handler(
+        admin_actions,
+        commands=["finduser"],
+        state="*",
+        is_admin=True,
+    )
+
+    dp.register_message_handler(find_user_action, state=find_user_state)
 
     dp.register_callback_query_handler(
         admin_user_actions,
@@ -973,7 +968,7 @@ def register_admin(dp: Dispatcher):
     dp.register_message_handler(
         advert_media,
         state=AdminStates.advert_media,
-        content_types=types.ContentTypes.ANY,
+        content_types=ContentTypes.ANY,
     )
     dp.register_message_handler(advert_text, state=AdminStates.advert_text)
 

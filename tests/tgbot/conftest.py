@@ -7,7 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy_utils import create_database, database_exists, drop_database
 
-from bot import setup_tgbot
+from bot import init_repository, setup_tgbot
 from tgbot.controllers.menu import MenuController
 from tgbot.models.orm.base import Base
 from config import config
@@ -59,6 +59,11 @@ def session(database):
     sess = Session(database)
     yield sess
     sess.close()
+
+
+@pytest.fixture
+def db_repository(session):
+    yield init_repository(session)
 
 
 @pytest.fixture

@@ -12,9 +12,9 @@ import pytz
 
 from tgbot.filters.rolefilters import AdminFilter
 from tgbot.filters.chatfilters import PrivateFilter
-from tgbot.handlers import register_menu, register_misc
+from tgbot.handlers import register_menu, register_misc, register_admin
 from tgbot.middlewares import ObjectsMiddleware, AlbumMiddleware, BannedMiddleware
-from tgbot.controllers import MenuController
+from tgbot.controllers import MenuController, AdminController
 from tgbot.models import UsersRepository
 from tgbot.models.orm.base import Base
 from config import config
@@ -49,6 +49,7 @@ def init_db(bot: Bot):
 def register_all_controllers(bot: Bot):
     logger.debug("Registering controllers.")
     bot["menu_controller"] = MenuController(bot["session"], bot["db_repository"])
+    bot["admin_controller"] = AdminController(bot["session"], bot["db_repository"])
 
 
 def register_all_middlewares(dp):
@@ -68,7 +69,7 @@ def register_all_handlers(dp):
     logger.debug("Registering handlers.")
     register_menu(dp)
     register_misc(dp)
-    # register_admin(dp)
+    register_admin(dp)
 
 
 async def take_all_banned_users(users_repo: UsersRepository):

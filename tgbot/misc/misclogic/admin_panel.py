@@ -5,8 +5,9 @@ import pytz
 from aiogram import Bot, types
 from aiogram.dispatcher.storage import FSMContext
 
-from tgbot.misc import statisticer
+from tgbot.misc.botstats import get_regs
 from tgbot.models import UserTables
+from config import config
 
 
 # TODO
@@ -55,9 +56,7 @@ async def take_stats_content(
 async def take_users_content(user_tables: UserTables, logger: logging.Logger = logging):
     users_list = await user_tables.take_all_users()
     statistic = statisticer.BotStatistic(users_list, logger=logger)
-    best_users = await statistic.list_of_the_best(
-        20, "reg_date", "rating", logger=logger
-    )
+    best_users = await statistic.list_of_the_best(20, "reg_date")
     best_users_strings = []
     for user in best_users:
         best_users_strings.append(
@@ -65,8 +64,7 @@ async def take_users_content(user_tables: UserTables, logger: logging.Logger = l
         )
     best_users_text = "\n".join(best_users_strings)
     text = f"""
-
-<b>Топ пользователей:</b>
+Лучшие пользователи бота <b>{config.tg_bot.bot_name}</b>:
 {best_users_text}
 
 <i>Выберите действие:</i>

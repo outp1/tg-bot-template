@@ -1,6 +1,9 @@
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
 # StatesGroup not calculated for iteration. Just a class.
+find_user_state = State()
+
+
 class AdminStates(StatesGroup):
     find_user = State()
 

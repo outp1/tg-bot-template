@@ -26,3 +26,10 @@ class UsersRepository(Repository):
         self._identity_map = identity_map or {self.repository_name: {}}
         self.entity_class = User
         self.model_class = UserModel
+
+    def get_by_username(self, username: str):
+        result = (
+            self.session.query(self.model_class).filter_by(username=username).first()
+        )
+        if result:
+            return self.model_to_entity(result)

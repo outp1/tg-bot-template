@@ -1,5 +1,31 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+from config import config
+
+
+def get_admin_panel_keyboard():
+    kb = InlineKeyboardMarkup()
+    kb.add(
+        InlineKeyboardButton(text="Статистика", callback_data="adm-panel_stats")
+    ).add(
+        InlineKeyboardButton(text="Пользователи", callback_data="adm-panel_users")
+    ).add(
+        InlineKeyboardButton(
+            text="Объявления", callback_data="adm-panel_advertisements"
+        )
+    )
+    return kb
+
+
+def get_users_panel_keyboard():
+    kb = InlineKeyboardMarkup()
+    kb.add(
+        InlineKeyboardButton(
+            text="Найти пользователя", callback_data="admaction_finduser"
+        )
+    )
+    return kb
+
 
 class AdminPanelKeyboards:
     def get_admin_panel_keyboard(buttons_list: str = None, *buttons):

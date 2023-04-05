@@ -13,3 +13,4 @@ class ObjectsMiddleware(LifetimeControllerMiddleware):
 
         #  controllers
         data["menu_controller"] = obj.bot.get("menu_controller")
+        data["admin_controller"] = obj.bot.get("admin_controller")

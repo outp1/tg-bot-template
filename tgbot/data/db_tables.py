@@ -27,8 +27,8 @@ content = """
 
 moderating_history = """
     CREATE TABLE IF NOT EXISTS moderating_history (
-        user_id         TEXT, 
-        role            TEXT, 
+        user_id         TEXT,
+        role            TEXT,
         action          TEXT,
         date            TEXT
 );

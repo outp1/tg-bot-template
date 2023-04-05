@@ -7,7 +7,6 @@ from aiogram import Bot, types
 from aiogram.dispatcher.storage import FSMContext
 
 from tgbot.misc import statisticer
-from tgbot.models import UserTables, ModeratingHistoryTables, AdvertisingTables
 from tgbot.data.db_tables import reg_date_index
 
 
@@ -99,6 +98,7 @@ async def take_users_content(user_tables: UserTables, logger: logging.Logger = l
         )
     best_users_text = "\n".join(best_users_strings)
     text = f"""
+Панель пользователей бота <b>{config.tg_bot.bot_name}</b>
 
 <b>Топ пользователей:</b>
 {best_users_text}
@@ -108,12 +108,8 @@ async def take_users_content(user_tables: UserTables, logger: logging.Logger = l
     return text
 
 
-async def take_advert_content(
-    advertising_tables: AdvertisingTables, logger: logging.Logger
-):
+async def take_advert_content(advertising_tables: AdvertisingTables):
     all_ads = await advertising_tables.get_all_advertisements()
-    for ad in all_ads:
-        logger.info(f"{ad['sending_date']} - {type(ad['sending_date'])}")
     try:
         all_ads.sort(
             key=lambda x: x["sending_date"] if x["sending_date"] else x["advert_id"],

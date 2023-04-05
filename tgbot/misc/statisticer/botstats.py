@@ -1,11 +1,3 @@
-from typing import Union
-import logging
-import datetime
-import sys
-
-import pytz
-
-
 class BotStatistic:
     def __init__(
         self,
@@ -17,7 +9,10 @@ class BotStatistic:
         self.logger = logger
         self.reg_date_index = reg_date_index
 
-    async def regs_number(self, timedelta: int, reg_date_index: Union[str, int] = None):
+    @staticmethod
+    async def regs_number(
+        timedelta: int, reg_date_index: Optional[Union[str, int]] = None
+    ):
         """Returns the number of registrations in the bot based on time span
 
         :param timedelta: is a number that is added to the date of the function call to filter users
@@ -93,11 +88,7 @@ class BotStatistic:
 
     # TODO
     async def list_of_the_best(
-        self,
-        num_of_lines: int = 1,
-        *sort_indexes,
-        logger: logging.Logger = logging,
-        reverse: bool = True
+        self, num_of_lines: int = 1, *sort_indexes, reverse: bool = True
     ):
         if not sort_indexes:
             raise "Sort indexes were not set"

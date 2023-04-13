@@ -1,8 +1,10 @@
 import re
-from datetime import datetime
-from aiogram.types import InlineKeyboardMarkup
-from sqlalchemy.orm import Session
+from datetime import datetime, timedelta
+from typing import Optional, Union
 
+from aiogram.types import InlineKeyboardMarkup
+from aiogram import Bot
+from sqlalchemy.orm import Session
 import pytz
 
 from tgbot import keyboards
@@ -19,11 +21,12 @@ from tgbot.misc.bot_stats import (
 
 
 class AdminController:
-    def __init__(self, session: Session, db_repository: dict):
+    def __init__(self, session: Session, db_repository: dict, bot: Bot):
         self.session = session
         self.db_repository = db_repository
         self.users_repo = UsersRepository(self.session, self.db_repository)
         self.adverts_repo = AdvertisementsRepository(self.session, self.db_repository)
+        self.bot = bot
 
     async def start(self):
         kb = get_admin_panel_keyboard()
@@ -109,18 +112,57 @@ class AdminController:
             InlineKeyboardMarkup(),
         )
 
-    async def find_user(self, text):
+    async def find_user(self, text) -> Optional[User]:
         # Check if the text is a Telegram ID
         if re.match(r"^\d+$", text):
-            user = self.users_repo.get_by_id(text)
-            if user:
-                return await self.get_user_info_panel(user)
+            return self.users_repo.get_by_id(text)
         # Check if the text is a Telegram username
         elif re.match(r"^[a-zA-Z0-9_]+$", text):
-            user = self.users_repo.get_by_username(text)
-            if user:
-                return await self.get_user_info_panel(user)
-        # If the text is neither an ID nor a username
+            return self.users_repo.get_by_username(text)
+
+    async def find_user_info(self, text):
+        user = await self.find_user(text)
+        if user:
+            return await self.get_user_info_panel(user)
         else:
-            return "Not a Telegram ID or username was specified", InlineKeyboardMarkup()
-        return "User was not found", InlineKeyboardMarkup()
+            return "User was not found", InlineKeyboardMarkup()
+
+    async def ban_user(self, user: User, ban_time: Union[str, timedelta], description):
+        if isinstance(ban_time, str):
+            duration_unit = {"m": "minutes", "h": "hours", "d": "days"}
+            if ban_time[-1] in duration_unit:
+                unit = duration_unit[ban_time[-1]]
+                duration = int(ban_time[:-1])
+            else:
+                unit = duration_unit["m"]
+                duration = int(ban_time)
+            ban_time = timedelta(**{unit: duration})
+        elif not ban_time:
+            ban_time = timedelta(weeks=1200)
+        if isinstance(user.unbanned_date, datetime):
+            user.unbanned_date += ban_time
+        else:
+            user.unbanned_date = ban_time + datetime.now(
+                tz=pytz.timezone(config.program.timezone)
+            )
+        self.users_repo.persist(user)
+        await self.bot.send_message(
+            user.id,
+            "<b>You were banned by the bot administration for the reason: <i>{}</i>. "
+            "The lock will be lifted on {:%Y-%m-%d at %H:%M}</b>".format(
+                description, user.unbanned_date
+            ),
+        )
+
+    async def ban_user_action(self, search_user, ban_time, description):
+        user = await self.find_user(search_user)
+        if user:
+            await self.ban_user(user, ban_time, description)
+            return (
+                "<b>User @{} has been banned until {:%Y-%m-%d %H-%M}</b>".format(
+                    user.username, user.unbanned_date
+                ),
+                InlineKeyboardMarkup(),
+            )
+        else:
+            return "User to ban was not found", InlineKeyboardMarkup()

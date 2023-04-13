@@ -13,6 +13,7 @@ from config import config
 logger = logging.getLogger("telegram_bot.BannedUsersService")
 
 
+# TODO full refactor
 async def banned_users_service(banned_users: List[User], db_session: Session):
     users_repo = UsersRepository(db_session)
     while True:
@@ -20,9 +21,9 @@ async def banned_users_service(banned_users: List[User], db_session: Session):
         for user in users:
             if user.unbanned_date is not None:
                 if (
-                    user["unbanned_date"]
+                    user.unbanned_date
                     <= datetime.now(pytz.timezone(config.program.timezone))
-                    and user["user_id"] in banned_users
+                    and user.id in banned_users
                 ):
                     while True:
                         try:

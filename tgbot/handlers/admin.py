@@ -8,7 +8,6 @@ from aiogram import Dispatcher, Bot
 from aiogram.types import Message, CallbackQuery, ContentTypes, InlineKeyboardMarkup
 from aiogram.dispatcher.storage import FSMContext
 from aiogram.utils.exceptions import BadRequest, MessageToDeleteNotFound
-from pyrogram.raw.core import message
 import pytz
 
 from tgbot.keyboards import get_inclose_kb
@@ -80,14 +79,22 @@ async def admin_actions(
             await find_user_state.set()
             return
         else:
-            text, kb = await admin_controller.find_user(" ".join(data[1:]))
+            text, kb = await admin_controller.find_user_info(" ".join(data[1:]))
+    elif action == "ban":
+        if 4 > len(data) < 2:
+            await bot.send_message(
+                chat_id, "<b>Incorrect syntax. Try /adminfo for help.</b>"
+            )
+            return
+        ban_time = data[2] if len(data) == 3 else None
+        description = data[4] if len(data) == 4 else ""
+        text, kb = await admin_controller.ban_user_action(
+            data[1], ban_time, description
+        )
     else:
         return
 
-    if isinstance(update, Message):
-        await update.answer(text, reply_markup=kb)
-    if isinstance(update, CallbackQuery):
-        await update.message.answer(text, reply_markup=kb)
+    await bot.send_message(chat_id, text, reply_markup=kb)
 
 
 # Find user action
@@ -103,7 +110,7 @@ async def find_user_action(
         await message.delete()
     except MessageToDeleteNotFound:
         pass
-    text, kb = await admin_controller.find_user(message.text)
+    text, kb = await admin_controller.find_user_info(message.text)
     await message.answer(text, reply_markup=kb)
 
 
@@ -936,7 +943,7 @@ def register_admin(dp: Dispatcher):
     )
     dp.register_message_handler(
         admin_actions,
-        commands=["finduser"],
+        commands=["finduser", "ban"],
         state="*",
         is_admin=True,
     )

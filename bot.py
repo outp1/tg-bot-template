@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from datetime import datetime
 
@@ -49,7 +48,7 @@ def init_db(bot: Bot):
 def register_all_controllers(bot: Bot):
     logger.debug("Registering controllers.")
     bot["menu_controller"] = MenuController(bot["session"], bot["db_repository"])
-    bot["admin_controller"] = AdminController(bot["session"], bot["db_repository"])
+    bot["admin_controller"] = AdminController(bot["session"], bot["db_repository"], bot)
 
 
 def register_all_middlewares(dp):
@@ -115,6 +114,7 @@ async def setup_tgbot():
     logger.debug("Telegram bot setup was completed successfully.")
 
     try:
+        await dp.skip_updates()
         await dp.start_polling()
     finally:
         await dp.storage.close()

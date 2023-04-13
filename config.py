@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from environs import Env
 from aiogram.types import InlineKeyboardButton
+from environs import Env
 
 from tgbot import data
 

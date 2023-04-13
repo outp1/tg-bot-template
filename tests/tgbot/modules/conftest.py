@@ -1,8 +1,8 @@
 import pytest
 from aiogram import Bot
 
-from tgbot.controllers import MenuController, AdminController
 from config import config
+from tgbot.controllers import AdminController, MenuController
 
 
 @pytest.fixture

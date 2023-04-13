@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from aiogram.types import InlineKeyboardMarkup
-from sqlalchemy import Column, String, JSON, ForeignKey
+from sqlalchemy import JSON, Column, ForeignKey, String
 
 from .base import BaseID, BaseModel
 from .users import UserModel

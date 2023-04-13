@@ -1,6 +1,6 @@
 from tgbot.controllers.menu import MenuController
-from tgbot.models.users import User
 from tgbot.misc.generate_id import generate_base_id
+from tgbot.models.users import User
 
 
 async def test_register_user(menu_controller: MenuController):

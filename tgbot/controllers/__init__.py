@@ -1,2 +1,2 @@
-from .menu import MenuController
 from .admin import AdminController
+from .menu import MenuController

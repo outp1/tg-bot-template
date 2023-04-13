@@ -1,4 +1,4 @@
-from aiogram import Dispatcher, Bot, types
+from aiogram import Bot, Dispatcher, types
 from aiogram.dispatcher.storage import FSMContext
 from aiogram.utils.exceptions import MessageToDeleteNotFound
 

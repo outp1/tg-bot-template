@@ -2,13 +2,13 @@ from datetime import datetime, timedelta
 from typing import Optional
 from unittest.mock import AsyncMock, patch
 
-from aiogram.types import InlineKeyboardMarkup
 import pytz
+from aiogram.types import InlineKeyboardMarkup
 
+from config import config
 from tgbot.controllers.admin import AdminController
 from tgbot.misc.generate_id import generate_base_id
 from tgbot.models.users import User, UsersRepository
-from config import config
 
 
 def register_user(users_repo: UsersRepository, user: Optional[User] = None):
@@ -82,9 +82,7 @@ async def test_ban_user_with_string_time(mock_send: AsyncMock, admin_controller)
     )
     await admin_controller.ban_user(test_user, "1h", "Test ban")
     assert isinstance(test_user.unbanned_date, datetime)
-    assert (
-        test_user.unbanned_date >= unbanned_date
-    )
+    assert test_user.unbanned_date >= unbanned_date
 
     # Test ban user with timedelta
     unbanned_date = unbanned_date + timedelta(hours=1)

@@ -1,23 +1,25 @@
-from typing import List, Optional
-import random
 import datetime
+import random
+from typing import List, Optional
 
 import pytz
 
-from tgbot.models.users import User
 from config import config
+from tgbot.models.users import User
 
 
 def get_users_regs_number(timedelta: int, users_list: List[User]):
     tz = pytz.timezone(config.program.timezone)
     today = datetime.datetime.now(tz)
-    return len(list(
-        filter(
-            lambda user: user.created_at.replace(tzinfo=tz)
-            >= (today - datetime.timedelta(timedelta)),
-            users_list,
+    return len(
+        list(
+            filter(
+                lambda user: user.created_at.replace(tzinfo=tz)
+                >= (today - datetime.timedelta(timedelta)),
+                users_list,
+            )
         )
-    ))
+    )
 
 
 def get_sorted_users(

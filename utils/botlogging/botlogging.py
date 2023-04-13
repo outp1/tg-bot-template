@@ -1,14 +1,12 @@
+import json
+import logging
+import logging.config
 import os
 import sys
-import logging
-import json
-import logging.config
-from . import telegram_errors_handler
-
-import logging.config
-import os
 
 from config import config
+
+from . import telegram_errors_handler
 
 LOGGING_FILE = config.program.logs_file
 

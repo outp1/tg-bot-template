@@ -1,13 +1,12 @@
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional
-from dataclasses import dataclass, field
-from sqlalchemy.orm import Session
+
 from aiogram.types import InlineKeyboardMarkup
+from sqlalchemy.orm import Session
 
 from .orm.adverts import AdvertModel
-
 from .orm.base import Repository
-
 from .users import UserID
 
 AdvertID = int

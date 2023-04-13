@@ -1,4 +1,5 @@
 import typing
+
 from aiogram.dispatcher.filters import BoundFilter
 
 from config import config

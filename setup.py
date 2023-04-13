@@ -1,7 +1,7 @@
 import asyncio
 
-from utils.botlogging import prepare_logging
 from bot import setup_tgbot
+from utils.botlogging import prepare_logging
 
 prepare_logging()
 

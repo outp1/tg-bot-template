@@ -6,8 +6,8 @@ import pytz
 from aiogram import Bot, types
 from aiogram.dispatcher.storage import FSMContext
 
-from tgbot.misc import statisticer
 from tgbot.data.db_tables import reg_date_index
+from tgbot.misc import statisticer
 
 
 async def format_user_info_to_text(user_info: dict, logger: logging.Logger = logging):

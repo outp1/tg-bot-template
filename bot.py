@@ -1,23 +1,23 @@
 import logging
 from datetime import datetime
 
+import pytz
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
 from sqlalchemy.engine import create_engine
-from sqlalchemy_utils import create_database, database_exists
 from sqlalchemy.orm import Session
-import pytz
+from sqlalchemy_utils import create_database, database_exists
 
-from tgbot.filters.rolefilters import AdminFilter
+from config import config
+from tgbot.controllers import AdminController, MenuController
 from tgbot.filters.chatfilters import PrivateFilter
-from tgbot.handlers import register_menu, register_misc, register_admin
-from tgbot.middlewares import ObjectsMiddleware, AlbumMiddleware, BannedMiddleware
-from tgbot.controllers import MenuController, AdminController
+from tgbot.filters.rolefilters import AdminFilter
+from tgbot.handlers import register_admin, register_menu, register_misc
+from tgbot.middlewares import (AlbumMiddleware, BannedMiddleware,
+                               ObjectsMiddleware)
 from tgbot.models import UsersRepository
 from tgbot.models.orm.base import Base
-from config import config
-
 
 logger = logging.getLogger("telegram_bot")
 
@@ -82,7 +82,6 @@ async def take_all_banned_users(users_repo: UsersRepository):
 
 
 async def setup_tgbot():
-
     logger.info("Starting bot")
 
     storage = RedisStorage2() if config.tg_bot.use_redis else MemoryStorage()

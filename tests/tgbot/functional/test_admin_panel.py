@@ -2,14 +2,15 @@ import asyncio
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, patch
 
-from pyrogram.client import Client
 import pytest
+from pyrogram.client import Client
 from sqlalchemy.orm import Session
 
 from config import config
 from tgbot.misc.generate_id import generate_base_id
 from tgbot.models.adverts import Advert, AdvertisementsRepository
 from tgbot.models.users import User, UsersRepository
+
 from .utils import assert_last_messsage_text_in, wait
 
 
@@ -206,5 +207,6 @@ async def test_ban_user(mock_send, user_for_ban, session, telegram_client: Clien
         )
 
         mock_send.await_args_list = []
+
 
 # TODO: at this moment i has decided to write unittests only

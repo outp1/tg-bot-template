@@ -5,9 +5,9 @@ import pytz
 from aiogram import Bot, types
 from aiogram.dispatcher.storage import FSMContext
 
+from config import config
 from tgbot.misc.botstats import get_regs
 from tgbot.models import UserTables
-from config import config
 
 
 # TODO

@@ -1,12 +1,12 @@
-import sys
 import logging
-from typing import List
+import sys
 from datetime import datetime
+from typing import List
 
+import pytz
 from aiogram import types
 from aiogram.dispatcher.handler import CancelHandler
 from aiogram.dispatcher.middlewares import BaseMiddleware
-import pytz
 
 from config import config
 from tgbot.models.users import User

@@ -1,6 +1,6 @@
-from aiogram.dispatcher.filters import BoundFilter
-
 from typing import Optional
+
+from aiogram.dispatcher.filters import BoundFilter
 
 
 class PrivateFilter(BoundFilter):

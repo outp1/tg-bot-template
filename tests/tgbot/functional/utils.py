@@ -1,10 +1,9 @@
 import asyncio
-from collections.abc import AsyncGenerator
 import time
+from collections.abc import AsyncGenerator
 from typing import Optional
 
 from pyrogram.types import Message
-
 
 MAX_WAIT = 15
 
@@ -19,6 +18,7 @@ def wait(fn):
                 if time.time() - start_time >= MAX_WAIT:
                     raise exc
                 await asyncio.sleep(0.5)
+
     return modified_fn
 
 

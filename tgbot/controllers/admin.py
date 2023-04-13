@@ -2,22 +2,18 @@ import re
 from datetime import datetime, timedelta
 from typing import Optional, Union
 
-from aiogram.types import InlineKeyboardMarkup
-from aiogram import Bot
-from sqlalchemy.orm import Session
 import pytz
+from aiogram import Bot
+from aiogram.types import InlineKeyboardMarkup
+from sqlalchemy.orm import Session
 
+from config import config
 from tgbot import keyboards
 from tgbot.keyboards.inline import get_admin_panel_keyboard
-from config import config
-from tgbot.models.users import UsersRepository
+from tgbot.misc.bot_stats import (get_list_of_random_users, get_sorted_users,
+                                  get_users_regs_number)
 from tgbot.models.adverts import AdvertisementsRepository
-from tgbot.models.users import User
-from tgbot.misc.bot_stats import (
-    get_users_regs_number,
-    get_sorted_users,
-    get_list_of_random_users,
-)
+from tgbot.models.users import User, UsersRepository
 
 
 class AdminController:

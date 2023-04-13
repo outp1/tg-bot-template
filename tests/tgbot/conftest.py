@@ -8,9 +8,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy_utils import create_database, database_exists, drop_database
 
 from bot import init_repository, setup_tgbot
+from config import config
 from tgbot.controllers.menu import MenuController
 from tgbot.models.orm.base import Base
-from config import config
 from utils.botlogging import prepare_logging
 
 prepare_logging()

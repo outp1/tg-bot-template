@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
-from tgbot.models.users import User, UsersRepository
 from tgbot.keyboards.reply import get_menu_keyboard
+from tgbot.models.users import User, UsersRepository
 
 
 class MenuController:

@@ -1,14 +1,13 @@
-import logging
 import asyncio
+import logging
 from datetime import datetime
 from typing import List
 
 import pytz
 from sqlalchemy.orm import Session
 
-from tgbot.models.users import User, UsersRepository
 from config import config
-
+from tgbot.models.users import User, UsersRepository
 
 logger = logging.getLogger("telegram_bot.BannedUsersService")
 

@@ -1,9 +1,10 @@
-from sqlalchemy.orm import Session
 from pyrogram.client import Client
+from sqlalchemy.orm import Session
 
-from tgbot.models.orm.users import UserModel
-from .utils import assert_last_messsage_text_in
 from config import config
+from tgbot.models.orm.users import UserModel
+
+from .utils import assert_last_messsage_text_in
 
 
 async def test_user_registering_at_start(session: Session, telegram_client: Client):

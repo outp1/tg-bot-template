@@ -1,5 +1,6 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+from .blanks import get_inclose_button
 from config import config
 
 
@@ -13,7 +14,7 @@ def get_admin_panel_keyboard():
         InlineKeyboardButton(
             text="Объявления", callback_data="adm-panel_advertisements"
         )
-    )
+    ).add(get_inclose_button(config.misc.inclose_text))
     return kb
 
 
@@ -24,6 +25,26 @@ def get_users_panel_keyboard():
             text="Найти пользователя", callback_data="admaction_finduser"
         )
     )
+    return kb
+
+
+def get_user_moderate_keyboard(user_id):
+    kb = InlineKeyboardMarkup()
+    kb.add(
+        InlineKeyboardButton(
+            text="Отправить сообщение",
+            callback_data=f"admaction_send-message_{user_id}",
+        ),
+        InlineKeyboardButton(
+            text="Блокировка", callback_data=f"admaction_banhelp_{user_id}"
+        ),
+    )
+    kb.add(
+        InlineKeyboardButton(
+            text="Редактировать", callback_data=f"admaction_edituserhelp{user_id}"
+        )
+    )
+    kb.add(get_inclose_button(config.misc.inclose_text))
     return kb
 
 

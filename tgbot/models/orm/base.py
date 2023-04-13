@@ -127,6 +127,7 @@ class Repository(BaseRepository):
         instance = self.entity_to_model(entity)
         merged = self.session.merge(instance)
         self.session.add(merged)
+        self._set_in_identity(entity.id, entity)
 
     def persist_all(self):
         for id, user in self._get_identity().items():

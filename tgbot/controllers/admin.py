@@ -5,13 +5,17 @@ from typing import Optional, Union
 import pytz
 from aiogram import Bot
 from aiogram.types import InlineKeyboardMarkup
+from sqlalchemy.exc import DataError
 from sqlalchemy.orm import Session
 
 from config import config
-from tgbot import keyboards
-from tgbot.keyboards.inline import get_admin_panel_keyboard
-from tgbot.misc.bot_stats import (get_list_of_random_users, get_sorted_users,
-                                  get_users_regs_number)
+from tgbot.keyboards.inline import get_admin_panel_keyboard, get_user_moderate_keyboard
+from tgbot.misc.bot_stats import (
+    get_list_of_random_users,
+    get_sorted_users,
+    get_users_regs_number,
+)
+from tgbot.misc.exceptions import EntityToEditNotFoundError
 from tgbot.models.adverts import AdvertisementsRepository
 from tgbot.models.users import User, UsersRepository
 
@@ -26,7 +30,6 @@ class AdminController:
 
     async def start(self):
         kb = get_admin_panel_keyboard()
-        kb.add(keyboards.inclose_button(config.misc.inclose_text))
         return "Hello, admin!", kb
 
     async def stats_panel(self):
@@ -105,18 +108,18 @@ class AdminController:
                 user.created_at.strftime("%Y-%m-%d %H:%M"),
                 user.ban_date,
             ),
-            InlineKeyboardMarkup(),
+            get_user_moderate_keyboard(user.id),
         )
 
     async def find_user(self, text) -> Optional[User]:
         # Check if the text is a Telegram ID
-        if re.match(r"^\d+$", text):
+        if re.match(r"^\d+$", str(text)):
             return self.users_repo.get_by_id(text)
         # Check if the text is a Telegram username
-        elif re.match(r"^[a-zA-Z0-9_]+$", text):
+        elif re.match(r"^[a-zA-Z0-9_]+$", str(text)):
             return self.users_repo.get_by_username(text)
 
-    async def find_user_info(self, text):
+    async def find_user_action(self, text):
         user = await self.find_user(text)
         if user:
             return await self.get_user_info_panel(user)
@@ -150,6 +153,13 @@ class AdminController:
             ),
         )
 
+    async def edit_user(self, user: User):
+        try:
+            self.users_repo.persist(user)
+            self.session.commit()
+        except AssertionError:
+            raise EntityToEditNotFoundError
+
     async def ban_user_action(self, search_user, ban_time, description):
         user = await self.find_user(search_user)
         if user:
@@ -162,3 +172,23 @@ class AdminController:
             )
         else:
             return "User to ban was not found", InlineKeyboardMarkup()
+
+    async def edit_user_action(self, search_user, key, value):
+        user = await self.find_user(search_user)
+        if not user:
+            return "User to edit was not found", InlineKeyboardMarkup()
+        if key == "id":
+            return "Primary key can't be edited", InlineKeyboardMarkup()
+        if hasattr(user, key):
+            setattr(user, key, value)
+        else:
+            return "Error! Key to edit does not exist.", InlineKeyboardMarkup()
+        try:
+            await self.edit_user(user)
+        except DataError:
+            self.session.rollback()
+            return "Error! This key can't be edited in this way", InlineKeyboardMarkup()
+        return (
+            f"Successfully edited <code>{key}</code> to <code>{value}</code> "
+            f"for a user with id <code>{user.id}</code>"
+        ), InlineKeyboardMarkup()

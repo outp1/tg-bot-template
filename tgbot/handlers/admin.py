@@ -7,13 +7,14 @@ from typing import Union
 import pytz
 from aiogram import Bot, Dispatcher
 from aiogram.dispatcher.storage import FSMContext
-from aiogram.types import (CallbackQuery, ContentTypes, InlineKeyboardMarkup,
-                           Message)
+from aiogram.types import CallbackQuery, ContentTypes, InlineKeyboardMarkup, Message
 from aiogram.utils.exceptions import BadRequest, MessageToDeleteNotFound
 
 from config import config
 from tgbot.controllers.admin import AdminController
-from tgbot.keyboards import AdminPanelKeyboards, get_inclose_kb
+from tgbot.keyboards import AdminPanelKeyboards
+from tgbot.keyboards.inline import get_user_moderate_keyboard
+from tgbot.keyboards.blanks import get_inclose_kb
 from tgbot.misc.states import AdminStates, find_user_state
 from utils.func_tools import generate_id_async, safe_list_get
 
@@ -79,7 +80,7 @@ async def admin_actions(
             await find_user_state.set()
             return
         else:
-            text, kb = await admin_controller.find_user_info(" ".join(data[1:]))
+            text, kb = await admin_controller.find_user_action(" ".join(data[1:]))
     elif action == "ban":
         if 4 > len(data) < 2:
             await bot.send_message(
@@ -91,6 +92,13 @@ async def admin_actions(
         text, kb = await admin_controller.ban_user_action(
             data[1], ban_time, description
         )
+    elif action == "edituser":
+        if len(data) < 4:
+            await bot.send_message(
+                chat_id, "<b>Incorrect syntax. Try /adminfo for help.</b>"
+            )
+            return
+        text, kb = await admin_controller.edit_user_action(data[1], data[2], data[3])
     else:
         return
 
@@ -110,7 +118,7 @@ async def find_user_action(
         await message.delete()
     except MessageToDeleteNotFound:
         pass
-    text, kb = await admin_controller.find_user_info(message.text)
+    text, kb = await admin_controller.find_user_action(message.text)
     await message.answer(text, reply_markup=kb)
 
 
@@ -943,7 +951,7 @@ def register_admin(dp: Dispatcher):
     )
     dp.register_message_handler(
         admin_actions,
-        commands=["finduser", "ban"],
+        commands=["finduser", "ban", "edituser"],
         state="*",
         is_admin=True,
     )

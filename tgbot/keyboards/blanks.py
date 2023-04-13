@@ -10,6 +10,6 @@ def get_inclose_kb(text: str, callback: str = default_inclose):
     return b
 
 
-def inclose_button(text: str, callback: str = default_inclose):
+def get_inclose_button(text: str, callback: str = default_inclose):
     b = InlineKeyboardButton(text=text, callback_data=callback)
     return b

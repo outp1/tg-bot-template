@@ -14,8 +14,7 @@ from tgbot.controllers import AdminController, MenuController
 from tgbot.filters.chatfilters import PrivateFilter
 from tgbot.filters.rolefilters import AdminFilter
 from tgbot.handlers import register_admin, register_menu, register_misc
-from tgbot.middlewares import (AlbumMiddleware, BannedMiddleware,
-                               ObjectsMiddleware)
+from tgbot.middlewares import AlbumMiddleware, BannedMiddleware, ObjectsMiddleware
 from tgbot.models import UsersRepository
 from tgbot.models.orm.base import Base
 

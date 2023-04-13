@@ -7,7 +7,7 @@ from tgbot.models.users import User
 
 async def user_start(message: Message, menu_controller: MenuController):
     await menu_controller.register_user(
-        User(id=message.from_user.id, username=message.from_user.mention)
+        User(id=message.from_user.id, username=message.from_user.username)
     )
     text, keyboard = await menu_controller.get_start_data()
     await message.answer(text, reply_markup=keyboard)

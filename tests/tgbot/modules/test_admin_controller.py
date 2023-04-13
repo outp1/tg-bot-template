@@ -3,14 +3,14 @@ from typing import Optional
 from unittest.mock import AsyncMock, patch
 
 import pytz
-from pytest import raises
 from aiogram.types import InlineKeyboardMarkup
+from pytest import raises
 
 from config import config
 from tgbot.controllers.admin import AdminController
+from tgbot.misc.exceptions import EntityToEditNotFoundError
 from tgbot.misc.generate_id import generate_base_id
 from tgbot.models.users import User, UsersRepository
-from tgbot.misc.exceptions import EntityToEditNotFoundError
 
 
 def register_user(users_repo: UsersRepository, user: Optional[User] = None):

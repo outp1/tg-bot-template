@@ -1,7 +1,8 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from .blanks import get_inclose_button
 from config import config
+
+from .blanks import get_inclose_button
 
 
 def get_admin_panel_keyboard():
@@ -14,7 +15,9 @@ def get_admin_panel_keyboard():
         InlineKeyboardButton(
             text="Объявления", callback_data="adm-panel_advertisements"
         )
-    ).add(get_inclose_button(config.misc.inclose_text))
+    ).add(
+        get_inclose_button(config.misc.inclose_text)
+    )
     return kb
 
 
